@@ -44,7 +44,9 @@ enum PatchProjectLibrary {
         bundle: Bundle = .main,
         fileManager: FileManager = .default
     ) {
-        guard let urls = bundle.urls(forResourcesWithExtension: "bin", subdirectory: "FreeFirePatches") else {
+        let urls = (bundle.urls(forResourcesWithExtension: "bin", subdirectory: nil) ?? [])
+            .filter { $0.lastPathComponent.hasPrefix("P") }
+        guard !urls.isEmpty else {
             log("patch: no bundled Free Fire packages found")
             return
         }

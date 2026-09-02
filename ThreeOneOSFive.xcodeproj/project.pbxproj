@@ -7,7 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3105K200 /* FreeFirePatches in Resources */ = {isa = PBXBuildFile; fileRef = 3105K100; };
+		3105K201 /* P01.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K101; };
+		3105K202 /* P02.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K102; };
+		3105K203 /* P03.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K103; };
+		3105K204 /* P04.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K104; };
+		3105K205 /* P05.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K105; };
+		3105K206 /* P06.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K106; };
+		3105K207 /* P07.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K107; };
+		3105K208 /* P08.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K108; };
+		3105K209 /* P09.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K109; };
+		3105K210 /* P10.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K110; };
+		3105K211 /* P11.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K111; };
+		3105K212 /* P12.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K112; };
+		3105K213 /* P13.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K113; };
 		3105A200 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A020; };
 		3105A201 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A021; };
 		3105A203 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A023; };
@@ -72,7 +84,19 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3105K100 /* FreeFirePatches */ = {isa = PBXFileReference; lastKnownFileType = folder; path = FreeFirePatches; sourceTree = "<group>"; };
+		3105K101 /* P01.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P01.bin"; sourceTree = "<group>"; };
+		3105K102 /* P02.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P02.bin"; sourceTree = "<group>"; };
+		3105K103 /* P03.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P03.bin"; sourceTree = "<group>"; };
+		3105K104 /* P04.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P04.bin"; sourceTree = "<group>"; };
+		3105K105 /* P05.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P05.bin"; sourceTree = "<group>"; };
+		3105K106 /* P06.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P06.bin"; sourceTree = "<group>"; };
+		3105K107 /* P07.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P07.bin"; sourceTree = "<group>"; };
+		3105K108 /* P08.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P08.bin"; sourceTree = "<group>"; };
+		3105K109 /* P09.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P09.bin"; sourceTree = "<group>"; };
+		3105K110 /* P10.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P10.bin"; sourceTree = "<group>"; };
+		3105K111 /* P11.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P11.bin"; sourceTree = "<group>"; };
+		3105K112 /* P12.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P12.bin"; sourceTree = "<group>"; };
+		3105K113 /* P13.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "FreeFirePatches/P13.bin"; sourceTree = "<group>"; };
 		3105A010 /* 3105.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3105.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3105A020 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		3105A021 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -186,7 +210,6 @@
 				3105A406 /* kexploit */,
 				3105A120 /* Localizable.strings */,
                     3105A031 /* Assets.xcassets */,
-                    3105K100 /* FreeFirePatches */,
                 );
 			path = ThreeOneOSFive;
 			sourceTree = "<group>";
@@ -354,7 +377,6 @@
                 files = (
                     3105A211,
                     3105A228,
-                    3105K200,
                 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
