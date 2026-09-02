@@ -307,19 +307,21 @@ private struct CHZPrivHomeView: View {
 
     @State private var selectedGame: GameTab = .freeFire
     @State private var enabledFiles = Array(repeating: false, count: 4)
+    @State private var activityLog = ["Sistema pronto — aguardando patches"]
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 22) {
+                VStack(spacing: 16) {
                     logo
                     gameTabs
                     functions
+                    activityLogView
                     backupStatus
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 18)
-                .padding(.bottom, 28)
+                .padding(.top, 12)
+                .padding(.bottom, 22)
             }
             .scrollIndicators(.hidden)
             .background(AppTheme.pageBackground.ignoresSafeArea())
@@ -331,16 +333,16 @@ private struct CHZPrivHomeView: View {
     private var logo: some View {
         VStack(spacing: -5) {
             Text("CHZ")
-                .font(.system(size: 48, weight: .black))
+                .font(.system(size: 42, weight: .black))
                 .italic()
                 .foregroundStyle(AppTheme.accent)
             Text("PRIV")
-                .font(.system(size: 43, weight: .black))
+                .font(.system(size: 38, weight: .black))
                 .italic()
                 .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 4)
+        .padding(.top, 8)
     }
 
     private var gameTabs: some View {
@@ -351,34 +353,33 @@ private struct CHZPrivHomeView: View {
                         selectedGame = tab
                     }
                 } label: {
-                    Text(tab.rawValue)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(selectedGame == tab ? .white : AppTheme.secondaryText)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(selectedGame == tab ? AppTheme.accent.opacity(0.10) : Color.clear)
+                    VStack(spacing: 0) {
+                        Text(tab.rawValue)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(selectedGame == tab ? .white : AppTheme.secondaryText)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 45)
+                        Capsule(style: .continuous)
+                            .fill(selectedGame == tab ? AppTheme.accentBright : .clear)
+                            .frame(height: 3)
+                            .padding(.horizontal, 18)
+                    }
+                    .background(selectedGame == tab ? AppTheme.accent.opacity(0.10) : .clear)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(AppTheme.accent.opacity(0.48), lineWidth: 0.8)
-        }
-        .overlay(alignment: selectedGame == .freeFire ? .leading : .trailing) {
-            Rectangle()
-                .fill(AppTheme.accentBright)
-                .frame(width: UIScreen.main.bounds.width * 0.43, height: 3)
-                .clipShape(Capsule())
-                .offset(y: 26)
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .stroke(AppTheme.accent.opacity(0.55), lineWidth: 0.8)
         }
     }
 
     private var functions: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Funções")
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 25, weight: .bold))
                 .foregroundStyle(.white)
                 .padding(.bottom, 2)
 
@@ -392,23 +393,95 @@ private struct CHZPrivHomeView: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 7) {
                 Text("Arquivo \(index + 1)")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white)
                 Text("Substituição autorizada")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(AppTheme.secondaryText)
             }
             Spacer(minLength: 8)
-            Toggle("", isOn: $enabledFiles[index])
+            Toggle("", isOn: Binding(
+                get: { enabledFiles[index] },
+                set: { updateFileState(index: index, isEnabled: $0) }
+            ))
                 .labelsHidden()
                 .toggleStyle(CHZSwitchStyle())
         }
-        .padding(.horizontal, 18)
-        .frame(minHeight: 106)
-        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(.horizontal, 16)
+        .frame(minHeight: 88)
+        .background(AppTheme.cardBackground.opacity(0.52), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(AppTheme.accent.opacity(0.52), lineWidth: 0.8)
+                .stroke(AppTheme.accent.opacity(0.72), lineWidth: 0.9)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(LinearGradient(
+                    colors: [.white.opacity(0.10), .clear, AppTheme.accent.opacity(0.05)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+                .allowsHitTesting(false)
+        }
+    }
+
+    private func updateFileState(index: Int, isEnabled: Bool) {
+        enabledFiles[index] = isEnabled
+        let fileName = "Arquivo \(index + 1)"
+        if isEnabled {
+            appendLog("\(fileName): ativação solicitada")
+            appendLog("\(fileName): validando patch e configuração")
+            appendLog("\(fileName): aguardando pacote de patch associado")
+        } else {
+            appendLog("\(fileName): desativação solicitada")
+            appendLog("\(fileName): restauração aguardará o backup protegido")
+        }
+    }
+
+    private func appendLog(_ message: String) {
+        let timestamp = Date().formatted(date: .omitted, time: .shortened)
+        activityLog.append("[\(timestamp)] \(message)")
+        if activityLog.count > 30 {
+            activityLog.removeFirst(activityLog.count - 30)
+        }
+    }
+
+    private var activityLogView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Log de atividade")
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(.white)
+                Spacer()
+                Image(systemName: "terminal.fill")
+                    .foregroundStyle(AppTheme.accent)
+            }
+
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(activityLog.enumerated()), id: \.offset) { _, entry in
+                        HStack(alignment: .top, spacing: 8) {
+                            Circle()
+                                .fill(AppTheme.accent)
+                                .frame(width: 6, height: 6)
+                                .padding(.top, 5)
+                            Text(entry)
+                                .font(.system(size: 12, weight: .regular, design: .monospaced))
+                                .foregroundStyle(AppTheme.secondaryText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                }
+            }
+            .frame(maxHeight: 150)
+        }
+        .padding(16)
+        .background(AppTheme.consoleBackground.opacity(0.56), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(AppTheme.accent.opacity(0.58), lineWidth: 0.8)
         }
     }
 
@@ -435,11 +508,22 @@ private struct CHZSwitchStyle: ToggleStyle {
         } label: {
             ZStack(alignment: configuration.isOn ? .trailing : .leading) {
                 Capsule(style: .continuous)
-                    .fill(configuration.isOn ? AppTheme.accent.opacity(0.82) : Color(red: 0.12, green: 0.12, blue: 0.14))
+                    .fill(configuration.isOn
+                    ? LinearGradient(
+                        colors: [AppTheme.accentBright, AppTheme.accent],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    : LinearGradient(
+                        colors: [Color.white.opacity(0.16), Color.black.opacity(0.35)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+                    .background(.ultraThinMaterial, in: Capsule(style: .continuous))
                     .frame(width: 58, height: 34)
                     .overlay {
                         Capsule(style: .continuous)
-                            .stroke(configuration.isOn ? AppTheme.accentBright.opacity(0.85) : Color.white.opacity(0.22), lineWidth: 0.8)
+                            .stroke(configuration.isOn ? AppTheme.accentBright : Color.white.opacity(0.28), lineWidth: 0.9)
                     }
 
                 Circle()
