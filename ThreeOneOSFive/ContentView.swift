@@ -301,7 +301,7 @@ private struct DashboardView: View {
 private struct CHZPrivHomeView: View {
     private enum GameTab: String, CaseIterable, Identifiable {
         case freeFire = "Free Fire"
-        case freeFireMax = "Free Fire Max"
+        case hologramas = "Hologramas"
         var id: String { rawValue }
     }
 
@@ -349,9 +349,9 @@ private struct CHZPrivHomeView: View {
             ScrollView {
                 VStack(spacing: 13) {
                     logo
+                    activityLogView
                     gameTabs
                     functions
-                    activityLogView
                     backupStatus
                 }
                 .padding(.horizontal, 16)
@@ -394,7 +394,7 @@ private struct CHZPrivHomeView: View {
                 } label: {
                     VStack(spacing: 0) {
                         Text(tab.rawValue)
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(selectedGame == tab ? .white : AppTheme.secondaryText)
                             .frame(maxWidth: .infinity)
                             .frame(height: 40)
@@ -422,21 +422,19 @@ private struct CHZPrivHomeView: View {
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(.white)
                 Spacer()
-                if selectedGame == .freeFire {
-                    Text("\(freeFirePatches.count) patches")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(AppTheme.secondaryText)
-                }
+                Text("\(visiblePatches.count) patches")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(AppTheme.secondaryText)
             }
             .padding(.bottom, 2)
 
-            if selectedGame == .freeFire {
-                ForEach(freeFirePatches) { item in
+            if !visiblePatches.isEmpty {
+                ForEach(visiblePatches) { item in
                     functionRow(item: item)
                 }
             } else {
-                Text("Nenhum patch disponível para Free Fire Max")
-                    .font(.system(size: 13, weight: .medium))
+                Text("Nenhum patch disponível para \(selectedGame.rawValue)")
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(AppTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 26)
@@ -450,11 +448,11 @@ private struct CHZPrivHomeView: View {
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.white)
                     .lineLimit(2)
                 Text(active ? "Patch ativo · backup protegido" : "Substituição autorizada")
-                    .font(.system(size: 11, weight: .regular))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(active ? AppTheme.success : AppTheme.secondaryText)
                     .lineLimit(1)
             }
@@ -489,6 +487,18 @@ private struct CHZPrivHomeView: View {
                 .frame(height: 28)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .allowsHitTesting(false)
+        }
+    }
+
+    private var visiblePatches: [PatchLibraryItem] {
+        freeFirePatches.filter { item in
+            let title = (item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent)
+                .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            let belongsToHologramas = title.contains("holograma")
+                || title.contains("holo")
+                || title.contains("antena")
+                || title.contains("hs peito")
+            return selectedGame == .hologramas ? belongsToHologramas : !belongsToHologramas
         }
     }
 
@@ -591,7 +601,7 @@ private struct CHZPrivHomeView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Log de atividade")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 16, weight: .heavy))
                         .foregroundStyle(.white)
                     Text("Sessão atual · \(enabledPatchIDs.count) ativo(s)")
                         .font(.system(size: 11, weight: .medium))

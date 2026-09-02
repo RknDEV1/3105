@@ -7,8 +7,9 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var patchDraftCoordinator = PatchDraftCoordinator()
     @StateObject private var fileOperationCoordinator = FileOperationCoordinator()
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
-    // A interface CHZ PRIV inicia diretamente na tela principal; o onboarding fica desativado.
+    // A interface CHZ PRIV abre após a seleção do jogo.
     @State private var showOnboarding = false
+    @State private var showGamePicker = true
     @State private var showAttribution = false
     @State private var updateOffer: AppUpdateChecker.Offer?
     @Environment(\.scenePhase) private var scenePhase
@@ -38,8 +39,20 @@ struct ThreeOneOSFiveApp: App {
                     .environmentObject(fileOperationCoordinator)
                     .environment(\.appLanguage, language)
                     .environment(\.locale, language.locale)
-                    .opacity(showOnboarding ? 0 : 1)
-                    .allowsHitTesting(!showOnboarding)
+                    .opacity(showOnboarding || showGamePicker ? 0 : 1)
+                    .allowsHitTesting(!showOnboarding && !showGamePicker)
+
+                if showGamePicker && !showOnboarding {
+                    FreeFireSelectionView {
+                        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                            showGamePicker = false
+                        }
+                    }
+                    .environment(\.appLanguage, language)
+                    .environment(\.locale, language.locale)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    .zIndex(1)
+                }
 
                 if showOnboarding {
                     OnboardingView {
@@ -56,7 +69,7 @@ struct ThreeOneOSFiveApp: App {
                     .zIndex(1)
                 }
             }
-            .displayIdentityAttribution(isPresented: $showAttribution, enabled: !showOnboarding)
+            .displayIdentityAttribution(isPresented: $showAttribution, enabled: !showOnboarding && !showGamePicker)
             .sheet(isPresented: $showAttribution) {
                 DisplayAttributionSheet()
             }
@@ -85,6 +98,84 @@ struct ThreeOneOSFiveApp: App {
             .onOpenURL { url in
                 patchDraftCoordinator.presentImport(url)
             }
+        }
+    }
+}
+
+private struct FreeFireSelectionView: View {
+    let onContinue: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            Circle()
+                .fill(Color.red.opacity(0.16))
+                .frame(width: 280, height: 280)
+                .blur(radius: 80)
+                .offset(x: 120, y: -230)
+
+            VStack(spacing: 22) {
+                Spacer(minLength: 30)
+
+                VStack(spacing: 5) {
+                    Text("CHZ")
+                        .font(.system(size: 38, weight: .black))
+                        .italic()
+                        .foregroundStyle(Color.red)
+                    Text("PRIV")
+                        .font(.system(size: 34, weight: .black))
+                        .italic()
+                        .foregroundStyle(.white)
+                }
+
+                VStack(spacing: 16) {
+                    Image("FreeFire")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 210, height: 210)
+                        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                                .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                        }
+                        .shadow(color: .red.opacity(0.28), radius: 24, y: 10)
+
+                    Text("Free Fire")
+                        .font(.system(size: 25, weight: .heavy))
+                        .foregroundStyle(.white)
+
+                    Text("Selecione um jogo para continuar")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.62))
+                }
+                .padding(.vertical, 22)
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
+                }
+
+                Button(action: onContinue) {
+                    HStack(spacing: 8) {
+                        Text("Acessar Free Fire")
+                            .font(.system(size: 16, weight: .bold))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(Color.red, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                    .shadow(color: .red.opacity(0.28), radius: 14, y: 7)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Acessar Free Fire")
+
+                Spacer(minLength: 30)
+            }
+            .padding(.horizontal, 22)
         }
     }
 }
