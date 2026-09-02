@@ -305,9 +305,42 @@ private struct CHZPrivHomeView: View {
         var id: String { rawValue }
     }
 
+    private enum LogLevel: Equatable {
+        case info, progress, success, warning
+
+        var tint: Color {
+            switch self {
+            case .info: return AppTheme.secondaryText
+            case .progress: return AppTheme.accentBright
+            case .success: return AppTheme.success
+            case .warning: return Color.orange
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .info: return "info.circle.fill"
+            case .progress: return "arrow.triangle.2.circlepath"
+            case .success: return "checkmark.circle.fill"
+            case .warning: return "exclamationmark.triangle.fill"
+            }
+        }
+    }
+
+    private struct LogEntry: Identifiable {
+        let id = UUID()
+        let timestamp: String
+        let message: String
+        let level: LogLevel
+    }
+
     @State private var selectedGame: GameTab = .freeFire
     @State private var enabledFiles = Array(repeating: false, count: 4)
-    @State private var activityLog = ["Sistema pronto — aguardando patches"]
+    @State private var activityLog = [LogEntry(
+        timestamp: Date().formatted(date: .omitted, time: .shortened),
+        message: "Sistema pronto — aguardando patches",
+        level: .info
+    )]
 
     var body: some View {
         NavigationStack {
@@ -429,19 +462,25 @@ private struct CHZPrivHomeView: View {
     private func updateFileState(index: Int, isEnabled: Bool) {
         enabledFiles[index] = isEnabled
         let fileName = "Arquivo \(index + 1)"
+
         if isEnabled {
-            appendLog("\(fileName): ativação solicitada")
-            appendLog("\(fileName): validando patch e configuração")
-            appendLog("\(fileName): aguardando pacote de patch associado")
+            // Cada ativação inicia uma nova sessão e remove o log do patch anterior.
+            activityLog.removeAll(keepingCapacity: true)
+            appendLog("Nova sessão iniciada para \(fileName)", level: .info)
+            appendLog("Validando patch e configuração", level: .progress)
+            appendLog("Criando backup do arquivo original", level: .progress)
+            appendLog("Aguardando pacote de patch associado", level: .warning)
         } else {
-            appendLog("\(fileName): desativação solicitada")
-            appendLog("\(fileName): restauração aguardará o backup protegido")
+            activityLog.removeAll(keepingCapacity: true)
+            appendLog("Sessão de restauração iniciada para \(fileName)", level: .info)
+            appendLog("Verificando journal e backup protegido", level: .progress)
+            appendLog("Aguardando patch real para restaurar o original", level: .warning)
         }
     }
 
-    private func appendLog(_ message: String) {
+    private func appendLog(_ message: String, level: LogLevel) {
         let timestamp = Date().formatted(date: .omitted, time: .shortened)
-        activityLog.append("[\(timestamp)] \(message)")
+        activityLog.append(LogEntry(timestamp: timestamp, message: message, level: level))
         if activityLog.count > 30 {
             activityLog.removeFirst(activityLog.count - 30)
         }
@@ -449,32 +488,64 @@ private struct CHZPrivHomeView: View {
 
     private var activityLogView: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Log de atividade")
-                    .font(.system(size: 21, weight: .bold))
-                    .foregroundStyle(.white)
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.accent.opacity(0.16))
+                    Image(systemName: "waveform.path.ecg")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(AppTheme.accentBright)
+                }
+                .frame(width: 30, height: 30)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Log de atividade")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
+                    Text("Sessão atual · \(enabledFiles.filter { $0 }.count) ativo(s)")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(AppTheme.secondaryText)
+                }
                 Spacer()
-                Image(systemName: "terminal.fill")
-                    .foregroundStyle(AppTheme.accent)
+                Circle()
+                    .fill(activityLog.last?.level.tint ?? AppTheme.secondaryText)
+                    .frame(width: 8, height: 8)
+                    .shadow(color: (activityLog.last?.level.tint ?? AppTheme.secondaryText).opacity(0.65), radius: 5)
             }
 
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 8) {
-                    ForEach(Array(activityLog.enumerated()), id: \.offset) { _, entry in
-                        HStack(alignment: .top, spacing: 8) {
-                            Circle()
-                                .fill(AppTheme.accent)
-                                .frame(width: 6, height: 6)
-                                .padding(.top, 5)
-                            Text(entry)
-                                .font(.system(size: 12, weight: .regular, design: .monospaced))
-                                .foregroundStyle(AppTheme.secondaryText)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 9) {
+                        ForEach(activityLog) { entry in
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: entry.level.symbol)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(entry.level.tint)
+                                    .frame(width: 16)
+                                    .padding(.top, 1)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(entry.message)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(entry.level == .warning ? Color.orange : .white.opacity(0.88))
+                                    Text(entry.timestamp)
+                                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                                        .foregroundStyle(AppTheme.tertiaryText)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .id(entry.id)
+                        }
+                    }
+                }
+                .frame(maxHeight: 142)
+                .onChange(of: activityLog.count) { _ in
+                    if let last = activityLog.last {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            proxy.scrollTo(last.id, anchor: .bottom)
                         }
                     }
                 }
             }
-            .frame(maxHeight: 150)
         }
         .padding(16)
         .background(AppTheme.consoleBackground.opacity(0.56), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
