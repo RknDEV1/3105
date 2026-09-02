@@ -1,5 +1,7 @@
 import Foundation
 
+import CryptoKit
+
 struct PatchLibraryItem: Identifiable {
     let summary: PatchPackageSummary
     var project: PatchProject?
@@ -42,7 +44,7 @@ enum PatchProjectLibrary {
         bundle: Bundle = .main,
         fileManager: FileManager = .default
     ) {
-        guard let urls = bundle.urls(forResourcesWithExtension: "3105", subdirectory: "FreeFirePatches") else {
+        guard let urls = bundle.urls(forResourcesWithExtension: "bin", subdirectory: "FreeFirePatches") else {
             log("patch: no bundled Free Fire packages found")
             return
         }
@@ -51,7 +53,8 @@ enum PatchProjectLibrary {
             let root = try packageRootURL(fileManager: fileManager)
             for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
                 do {
-                    let data = try readPackage(at: url)
+                    let encryptedData = try Data(contentsOf: url, options: .mappedIfSafe)
+                    let data = try decryptBundledPatch(encryptedData)
                     let summary = try PatchPackageCodec.inspect(data)
                     let decoded: DecodedPatchPackage
                     if let contentKey = try PatchKeyStore.load(for: summary) {
@@ -60,7 +63,8 @@ enum PatchProjectLibrary {
                         decoded = try PatchPackageCodec.decode(data, password: nil)
                     }
 
-                    let destination = root.appendingPathComponent(url.lastPathComponent)
+                    let destinationName = sanitizedFilename(decoded.project.name) + ".3105"
+                    let destination = root.appendingPathComponent(destinationName)
                     let shouldInstall: Bool
                     if fileManager.fileExists(atPath: destination.path) {
                         shouldInstall = (try? readPackage(at: destination)) != data
@@ -84,6 +88,21 @@ enum PatchProjectLibrary {
         } catch {
             log("patch: unable to prepare bundled Free Fire packages")
         }
+    }
+
+    private static func decryptBundledPatch(_ encrypted: Data) throws -> Data {
+        let magic = Data("CHZP1\0".utf8)
+        guard encrypted.count > magic.count + 12,
+              encrypted.prefix(magic.count) == magic else {
+            throw PatchPackageError.unsupportedFormat
+        }
+        let seed = Data("chz-priv-free-fire-v1-protected".utf8)
+        let bundleID = Data("com.apple.mobile.MobileHouseArrest".utf8)
+        let keyDigest = SHA256.hash(data: seed + Data("|".utf8) + bundleID)
+        let key = SymmetricKey(data: Data(keyDigest))
+        let combined = Data(encrypted.dropFirst(magic.count))
+        let sealedBox = try AES.GCM.SealedBox(combined: combined)
+        return try AES.GCM.open(sealedBox, using: key, authenticating: magic)
     }
 
     static func load(fileManager: FileManager = .default) -> [PatchLibraryItem] {
