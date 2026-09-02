@@ -142,7 +142,7 @@ struct AppThemeModifier: ViewModifier {
         content
             .preferredColorScheme(.dark)
             .tint(AppTheme.accent)
-            .fontDesign(.rounded)
+            .environment(\.font, .system(.body, design: .rounded))
             .foregroundStyle(AppTheme.primaryText)
             .scrollContentBackground(.hidden)
             .background(AppTheme.pageBackground.ignoresSafeArea())
