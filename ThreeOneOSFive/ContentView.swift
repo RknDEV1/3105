@@ -450,8 +450,8 @@ private struct CHZSwitchStyle: ToggleStyle {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(configuration.label)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(configuration.isOn ? "Ativado" : "Desativado")
         .accessibilityAddTraits(configuration.isOn ? .isSelected : [])
     }
 }
