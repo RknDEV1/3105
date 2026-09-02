@@ -2,18 +2,18 @@ import SwiftUI
 import UIKit
 
 enum AppTheme {
-    // Identidade CHZ PRIV: preto profundo, vermelho vivo e neutros de alto contraste.
+    // Identidade CHZ PRIV: fundo preto, vermelho vivo, branco e cinza.
     static let accent = Color(red: 0.96, green: 0.03, blue: 0.08)
     static let accentBright = Color(red: 1.00, green: 0.12, blue: 0.16)
     static let accentSoft = Color(red: 0.96, green: 0.03, blue: 0.08).opacity(0.16)
-    static let pageBackground = Color(red: 0.015, green: 0.008, blue: 0.010)
+    static let pageBackground = Color.black
     static let consoleBackground = Color(red: 0.045, green: 0.018, blue: 0.022)
     static let cardBackground = Color(red: 0.065, green: 0.020, blue: 0.026)
     static let fieldBackground = Color(red: 0.10, green: 0.035, blue: 0.042)
-    static let primaryText = Color(red: 1.00, green: 0.16, blue: 0.20)
-    static let secondaryText = Color(red: 0.78, green: 0.42, blue: 0.45)
-    static let tertiaryText = Color(red: 0.52, green: 0.25, blue: 0.28)
-    static let success = Color(red: 1.00, green: 0.24, blue: 0.28)
+    static let primaryText = Color.white
+    static let secondaryText = Color(red: 0.56, green: 0.56, blue: 0.58)
+    static let tertiaryText = Color(red: 0.38, green: 0.38, blue: 0.40)
+    static let success = Color(red: 0.19, green: 0.82, blue: 0.42)
     static let pageInset: CGFloat = 16
     static let rowIconSize: CGFloat = 17
     static let rowIconFrame: CGFloat = 28
@@ -31,8 +31,7 @@ enum AppTheme {
 struct AppCardBorder: View {
     var body: some View {
         RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous)
-            .strokeBorder(AppTheme.accent.opacity(0.48), lineWidth: 0.8)
-            .shadow(color: AppTheme.accent.opacity(0.10), radius: 8)
+            .strokeBorder(AppTheme.accent.opacity(0.52), lineWidth: 0.7)
             .accessibilityHidden(true)
     }
 }
@@ -49,10 +48,10 @@ struct AppRowIcon: View {
                 .fill(tint.opacity(0.16))
                 .overlay {
                     RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .stroke(tint.opacity(0.42), lineWidth: 0.6)
+                        .stroke(AppTheme.accent.opacity(0.42), lineWidth: 0.6)
                 }
             Image(systemName: systemName)
-                .font(.system(size: symbolSize, weight: .semibold, design: .rounded))
+                .font(.system(size: symbolSize, weight: .semibold))
                 .foregroundStyle(tint)
         }
         .frame(width: frameSize, height: frameSize)
@@ -73,7 +72,7 @@ struct AppSearchField: View {
                 .accessibilityHidden(true)
 
             TextField(prompt, text: $text)
-                .font(.system(.body, design: .rounded))
+                .font(.body)
                 .foregroundStyle(AppTheme.primaryText)
                 .tint(AppTheme.accent)
                 .textInputAutocapitalization(.never)
@@ -83,7 +82,7 @@ struct AppSearchField: View {
             if !text.isEmpty {
                 Button { text = "" } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(AppTheme.secondaryText)
                 }
                 .buttonStyle(.plain)
@@ -119,7 +118,7 @@ struct AppLogo: View {
                     .scaledToFill()
             } else {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: size * 0.45, weight: .bold, design: .rounded))
+                    .font(.system(size: size * 0.45, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(AppTheme.accent)
