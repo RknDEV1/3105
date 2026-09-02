@@ -345,7 +345,7 @@ private struct CHZPrivHomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 13) {
                     logo
                     gameTabs
                     functions
@@ -353,8 +353,8 @@ private struct CHZPrivHomeView: View {
                     backupStatus
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 22)
+                .padding(.top, 10)
+                .padding(.bottom, 18)
             }
             .scrollIndicators(.hidden)
             .background(AppTheme.pageBackground.ignoresSafeArea())
@@ -364,18 +364,18 @@ private struct CHZPrivHomeView: View {
     }
 
     private var logo: some View {
-        VStack(spacing: -5) {
+        VStack(spacing: -2) {
             Text("CHZ")
-                .font(.system(size: 42, weight: .black))
+                .font(.system(size: 36, weight: .black))
                 .italic()
                 .foregroundStyle(AppTheme.accent)
             Text("PRIV")
-                .font(.system(size: 38, weight: .black))
+                .font(.system(size: 33, weight: .black))
                 .italic()
                 .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 8)
+        .padding(.top, 6)
     }
 
     private var gameTabs: some View {
@@ -391,28 +391,28 @@ private struct CHZPrivHomeView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(selectedGame == tab ? .white : AppTheme.secondaryText)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 45)
+                            .frame(height: 40)
                         Capsule(style: .continuous)
                             .fill(selectedGame == tab ? AppTheme.accentBright : .clear)
                             .frame(height: 3)
-                            .padding(.horizontal, 18)
+                            .padding(.horizontal, 14)
                     }
                     .background(selectedGame == tab ? AppTheme.accent.opacity(0.10) : .clear)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(AppTheme.accent.opacity(0.55), lineWidth: 0.8)
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 0.7)
         }
     }
 
     private var functions: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Funções")
-                .font(.system(size: 25, weight: .bold))
+                .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(.white)
                 .padding(.bottom, 2)
 
@@ -426,10 +426,10 @@ private struct CHZPrivHomeView: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 7) {
                 Text("Arquivo \(index + 1)")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)
                 Text("Substituição autorizada")
-                    .font(.system(size: 14, weight: .regular))
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundStyle(AppTheme.secondaryText)
             }
             Spacer(minLength: 8)
@@ -440,21 +440,27 @@ private struct CHZPrivHomeView: View {
                 .labelsHidden()
                 .toggleStyle(CHZSwitchStyle())
         }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 88)
-        .background(AppTheme.cardBackground.opacity(0.52), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(.horizontal, 14)
+        .frame(minHeight: 76)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(AppTheme.accent.opacity(0.72), lineWidth: 0.9)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 0.7)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(AppTheme.accent.opacity(0.42), lineWidth: 0.55)
+        }
+        .overlay(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(LinearGradient(
-                    colors: [.white.opacity(0.10), .clear, AppTheme.accent.opacity(0.05)],
+                    colors: [.white.opacity(0.13), .clear],
                     startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    endPoint: .center
                 ))
+                .frame(height: 28)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .allowsHitTesting(false)
         }
     }
@@ -500,7 +506,7 @@ private struct CHZPrivHomeView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Log de atividade")
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.white)
                     Text("Sessão atual · \(enabledFiles.filter { $0 }.count) ativo(s)")
                         .font(.system(size: 11, weight: .medium))
@@ -525,10 +531,10 @@ private struct CHZPrivHomeView: View {
                                     .padding(.top, 1)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(entry.message)
-                                        .font(.system(size: 12, weight: .medium))
+                                        .font(.system(size: 11, weight: .medium))
                                         .foregroundStyle(entry.level == .warning ? Color.orange : .white.opacity(0.88))
                                     Text(entry.timestamp)
-                                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                                        .font(.system(size: 9, weight: .regular, design: .monospaced))
                                         .foregroundStyle(AppTheme.tertiaryText)
                                 }
                                 Spacer(minLength: 0)
@@ -537,7 +543,7 @@ private struct CHZPrivHomeView: View {
                         }
                     }
                 }
-                .frame(maxHeight: 142)
+                .frame(maxHeight: 128)
                 .onChange(of: activityLog.count) { _ in
                     if let last = activityLog.last {
                         withAnimation(.easeOut(duration: 0.2)) {
@@ -547,12 +553,23 @@ private struct CHZPrivHomeView: View {
                 }
             }
         }
-        .padding(16)
-        .background(AppTheme.consoleBackground.opacity(0.56), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(13)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Color.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(AppTheme.accent.opacity(0.58), lineWidth: 0.8)
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 0.7)
+        }
+        .overlay(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .fill(LinearGradient(
+                    colors: [.white.opacity(0.10), .clear],
+                    startPoint: .topLeading,
+                    endPoint: .center
+                ))
+                .frame(height: 24)
+                .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                .allowsHitTesting(false)
         }
     }
 
