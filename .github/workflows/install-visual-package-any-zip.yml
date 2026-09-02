@@ -1,0 +1,48 @@
+name: Install visual rebrand package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract and install modified project
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORK_DIR="$RUNNER_TEMP/visual-package"
+          rm -rf "$WORK_DIR"
+          mkdir -p "$WORK_DIR"
+          ZIP_FILE=$(find . -maxdepth 3 -type f -iname '*.zip' -print -quit)
+          test -n "$ZIP_FILE" || { echo "No ZIP file found in the repository."; find . -maxdepth 3 -type f -print; exit 1; }
+          echo "Using ZIP: $ZIP_FILE"
+          unzip -q "$ZIP_FILE" -d "$WORK_DIR"
+          SOURCE=$(find "$WORK_DIR" -type d -name ThreeOneOSFive.xcodeproj -print -quit | sed 's#/ThreeOneOSFive.xcodeproj$##')
+          test -n "$SOURCE" || { echo "Could not find ThreeOneOSFive.xcodeproj inside the ZIP."; find "$WORK_DIR" -maxdepth 5 -print; exit 1; }
+          echo "Installing project from: $SOURCE"
+          cp -R "$SOURCE"/. .
+          rm -f "$ZIP_FILE"
+          rm -rf "$WORK_DIR"
+
+      - name: Commit installed project
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Apply CHZ PRIV red visual identity to v1.1.1"
+          git push
