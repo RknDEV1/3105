@@ -7,19 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3105K201 /* P01.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K101; };
-		3105K202 /* P02.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K102; };
-		3105K203 /* P03.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K103; };
-		3105K204 /* P04.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K104; };
-		3105K205 /* P05.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K105; };
-		3105K206 /* P06.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K106; };
-		3105K207 /* P07.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K107; };
-		3105K208 /* P08.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K108; };
-		3105K209 /* P09.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K109; };
-		3105K210 /* P10.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K110; };
-		3105K211 /* P11.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K111; };
-		3105K212 /* P12.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K112; };
-		3105K213 /* P13.bin in Resources */ = {isa = PBXBuildFile; fileRef = 3105K113; };
 		3105A200 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A020; };
 		3105A201 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A021; };
 		3105A203 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A023; };
@@ -81,22 +68,35 @@
 		3105A234 /* AppDataBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A105; };
 		3105A228 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3105A120; };
 		3105A211 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3105A031; };
+		3105L201 /* BALA MÁGICA COM ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L101; };
+		3105L202 /* Chams + Holo tím.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L102; };
+		3105L203 /* HS 100- BAYPSS-CACHE.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L103; };
+		3105L204 /* HS ALTO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L104; };
+		3105L205 /* HS ALTO - PESCOÇO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L105; };
+		3105L206 /* HS ALTO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L106; };
+		3105L207 /* HS CABEÇA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L107; };
+		3105L208 /* HS PEITO BRUTO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L108; };
+		3105L209 /* HS PEITO BRUTO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L109; };
+		3105L210 /* HS PEITO LITE - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L110; };
+		3105L211 /* HS PEITO LITE.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L111; };
+		3105L212 /* HS PESCOÇO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L112; };
+		3105L213 /* Unlock FPS 144.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L113; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3105K101 /* P01.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P01.bin"; sourceTree = "<group>"; };
-		3105K102 /* P02.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P02.bin"; sourceTree = "<group>"; };
-		3105K103 /* P03.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P03.bin"; sourceTree = "<group>"; };
-		3105K104 /* P04.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P04.bin"; sourceTree = "<group>"; };
-		3105K105 /* P05.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P05.bin"; sourceTree = "<group>"; };
-		3105K106 /* P06.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P06.bin"; sourceTree = "<group>"; };
-		3105K107 /* P07.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P07.bin"; sourceTree = "<group>"; };
-		3105K108 /* P08.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P08.bin"; sourceTree = "<group>"; };
-		3105K109 /* P09.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P09.bin"; sourceTree = "<group>"; };
-		3105K110 /* P10.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P10.bin"; sourceTree = "<group>"; };
-		3105K111 /* P11.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P11.bin"; sourceTree = "<group>"; };
-		3105K112 /* P12.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P12.bin"; sourceTree = "<group>"; };
-		3105K113 /* P13.bin */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/P13.bin"; sourceTree = "<group>"; };
+		3105L101 /* BALA MÁGICA COM ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/BALA MÁGICA COM ANTENA.3105"; sourceTree = "<group>"; };
+		3105L102 /* Chams + Holo tím.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Chams + Holo tím.3105"; sourceTree = "<group>"; };
+		3105L103 /* HS 100- BAYPSS-CACHE.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS 100- BAYPSS-CACHE.3105"; sourceTree = "<group>"; };
+		3105L104 /* HS ALTO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO - ANTENA.3105"; sourceTree = "<group>"; };
+		3105L105 /* HS ALTO - PESCOÇO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO - PESCOÇO.3105"; sourceTree = "<group>"; };
+		3105L106 /* HS ALTO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO.3105"; sourceTree = "<group>"; };
+		3105L107 /* HS CABEÇA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS CABEÇA.3105"; sourceTree = "<group>"; };
+		3105L108 /* HS PEITO BRUTO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO BRUTO - ANTENA.3105"; sourceTree = "<group>"; };
+		3105L109 /* HS PEITO BRUTO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO BRUTO.3105"; sourceTree = "<group>"; };
+		3105L110 /* HS PEITO LITE - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO LITE - ANTENA.3105"; sourceTree = "<group>"; };
+		3105L111 /* HS PEITO LITE.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO LITE.3105"; sourceTree = "<group>"; };
+		3105L112 /* HS PESCOÇO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PESCOÇO - ANTENA.3105"; sourceTree = "<group>"; };
+		3105L113 /* Unlock FPS 144.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Unlock FPS 144.3105"; sourceTree = "<group>"; };
 		3105A010 /* 3105.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3105.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3105A020 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		3105A021 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -377,19 +377,19 @@
                 files = (
                     3105A211,
                     3105A228,
-                    3105K201,
-                    3105K202,
-                    3105K203,
-                    3105K204,
-                    3105K205,
-                    3105K206,
-                    3105K207,
-                    3105K208,
-                    3105K209,
-                    3105K210,
-                    3105K211,
-                    3105K212,
-                    3105K213,
+					3105L201,
+					3105L202,
+					3105L203,
+					3105L204,
+					3105L205,
+					3105L206,
+					3105L207,
+					3105L208,
+					3105L209,
+					3105L210,
+					3105L211,
+					3105L212,
+					3105L213,
                 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};

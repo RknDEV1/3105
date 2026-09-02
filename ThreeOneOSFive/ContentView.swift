@@ -364,7 +364,7 @@ private struct CHZPrivHomeView: View {
         }
         .tint(AppTheme.accent)
         .onAppear {
-            PatchProjectLibrary.installBundledFreeFirePatches()
+            PatchProjectLibrary.installBundledOriginalFreeFirePatches()
             reloadFreeFirePatches()
         }
     }

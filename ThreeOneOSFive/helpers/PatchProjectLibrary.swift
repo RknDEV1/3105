@@ -92,6 +92,37 @@ enum PatchProjectLibrary {
         }
     }
 
+    static func installBundledOriginalFreeFirePatches(
+        bundle: Bundle = .main,
+        fileManager: FileManager = .default
+    ) {
+        let urls = bundle.urls(forResourcesWithExtension: "3105", subdirectory: nil) ?? []
+        guard !urls.isEmpty else {
+            log("patch: no bundled original Free Fire packages found")
+            return
+        }
+
+        do {
+            let root = try packageRootURL(fileManager: fileManager)
+            for source in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+                let destination = root.appendingPathComponent(source.lastPathComponent)
+                let sourceData = try Data(contentsOf: source, options: .mappedIfSafe)
+                let needsCopy: Bool
+                if fileManager.fileExists(atPath: destination.path) {
+                    needsCopy = (try? readPackage(at: destination)) != sourceData
+                } else {
+                    needsCopy = true
+                }
+                if needsCopy {
+                    try sourceData.write(to: destination, options: [.atomic, .completeFileProtection])
+                    log("patch: bundled original package imported — \(source.deletingPathExtension().lastPathComponent)")
+                }
+            }
+        } catch {
+            log("patch: unable to import bundled original Free Fire packages")
+        }
+    }
+
     private static func decryptBundledPatch(_ encrypted: Data) throws -> Data {
         let magic = Data("CHZP1\0".utf8)
         guard encrypted.count > magic.count + 12,
