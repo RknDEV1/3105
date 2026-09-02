@@ -335,7 +335,9 @@ private struct CHZPrivHomeView: View {
     }
 
     @State private var selectedGame: GameTab = .freeFire
-    @State private var enabledFiles = Array(repeating: false, count: 4)
+    @State private var freeFirePatches: [PatchLibraryItem] = []
+    @State private var enabledPatchIDs = Set<UUID>()
+    @State private var isWorking = false
     @State private var activityLog = [LogEntry(
         timestamp: Date().formatted(date: .omitted, time: .shortened),
         message: "Sistema pronto — aguardando patches",
@@ -361,6 +363,10 @@ private struct CHZPrivHomeView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .tint(AppTheme.accent)
+        .onAppear {
+            PatchProjectLibrary.installBundledFreeFirePatches()
+            reloadFreeFirePatches()
+        }
     }
 
     private var logo: some View {
@@ -411,37 +417,58 @@ private struct CHZPrivHomeView: View {
 
     private var functions: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Funções")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.bottom, 2)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Funções")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.white)
+                Spacer()
+                if selectedGame == .freeFire {
+                    Text("\(freeFirePatches.count) patches")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(AppTheme.secondaryText)
+                }
+            }
+            .padding(.bottom, 2)
 
-            ForEach(0..<4, id: \.self) { index in
-                functionRow(index: index)
+            if selectedGame == .freeFire {
+                ForEach(freeFirePatches) { item in
+                    functionRow(item: item)
+                }
+            } else {
+                Text("Nenhum patch disponível para Free Fire Max")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(AppTheme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 26)
             }
         }
     }
 
-    private func functionRow(index: Int) -> some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 7) {
-                Text("Arquivo \(index + 1)")
-                    .font(.system(size: 16, weight: .bold))
+    private func functionRow(item: PatchLibraryItem) -> some View {
+        let active = enabledPatchIDs.contains(item.id)
+        let title = item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent
+        return HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
-                Text("Substituição autorizada")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(AppTheme.secondaryText)
+                    .lineLimit(2)
+                Text(active ? "Patch ativo · backup protegido" : "Substituição autorizada")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(active ? AppTheme.success : AppTheme.secondaryText)
+                    .lineLimit(1)
             }
-            Spacer(minLength: 8)
-            Toggle("", isOn: Binding(
-                get: { enabledFiles[index] },
-                set: { updateFileState(index: index, isEnabled: $0) }
+            Spacer(minLength: 6)
+            Toggle("\(title)", isOn: Binding(
+                get: { enabledPatchIDs.contains(item.id) },
+                set: { updatePatchState(item: item, isEnabled: $0) }
             ))
                 .labelsHidden()
                 .toggleStyle(CHZSwitchStyle())
+                .disabled(item.project == nil || isWorking)
         }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 76)
+        .padding(.horizontal, 13)
+        .frame(minHeight: 70)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
@@ -465,22 +492,80 @@ private struct CHZPrivHomeView: View {
         }
     }
 
-    private func updateFileState(index: Int, isEnabled: Bool) {
-        enabledFiles[index] = isEnabled
-        let fileName = "Arquivo \(index + 1)"
+    private func reloadFreeFirePatches() {
+        // Os pacotes empacotados nesta versão pertencem exclusivamente ao Free Fire.
+        let items = PatchProjectLibrary.load()
+        freeFirePatches = items
+        enabledPatchIDs = Set(items.compactMap { item in
+            guard DevicePatchService.latestReceipt(projectID: item.id) != nil else { return nil }
+            return item.id
+        })
+    }
+
+    private func updatePatchState(item: PatchLibraryItem, isEnabled: Bool) {
+        guard let baseProject = item.project else {
+            appendLog("Patch indisponível: pacote bloqueado ou inválido", level: .warning)
+            return
+        }
+        let patchName = baseProject.name
+        isWorking = true
 
         if isEnabled {
-            // Cada ativação inicia uma nova sessão e remove o log do patch anterior.
             activityLog.removeAll(keepingCapacity: true)
-            appendLog("Nova sessão iniciada para \(fileName)", level: .info)
-            appendLog("Validando patch e configuração", level: .progress)
+            appendLog("Nova sessão iniciada — \(patchName)", level: .info)
+            appendLog("Validando configuração do patch", level: .progress)
             appendLog("Criando backup do arquivo original", level: .progress)
-            appendLog("Aguardando pacote de patch associado", level: .warning)
+            applyPatch(item: item, baseProject: baseProject, patchName: patchName)
         } else {
             activityLog.removeAll(keepingCapacity: true)
-            appendLog("Sessão de restauração iniciada para \(fileName)", level: .info)
+            appendLog("Sessão de restauração — \(patchName)", level: .info)
             appendLog("Verificando journal e backup protegido", level: .progress)
-            appendLog("Aguardando patch real para restaurar o original", level: .warning)
+            restorePatch(item: item, patchName: patchName)
+        }
+    }
+
+    private func applyPatch(item: PatchLibraryItem, baseProject: PatchProject, patchName: String) {
+        Task.detached(priority: .userInitiated) {
+            do {
+                let project = item.summary.schemaVersion >= 2
+                    ? try PatchProjectLibrary.synchronizeWorkspace(item: item)
+                    : baseProject
+                _ = try DevicePatchService.apply(project: project)
+                await MainActor.run {
+                    enabledPatchIDs.insert(item.id)
+                    isWorking = false
+                    appendLog("Patch aplicado e verificado", level: .success)
+                }
+            } catch {
+                await MainActor.run {
+                    isWorking = false
+                    appendLog("Falha ao ativar: \(error.localizedDescription)", level: .warning)
+                }
+            }
+        }
+    }
+
+    private func restorePatch(item: PatchLibraryItem, patchName: String) {
+        guard let receipt = DevicePatchService.latestReceipt(projectID: item.id) else {
+            enabledPatchIDs.remove(item.id)
+            isWorking = false
+            appendLog("Nenhum backup ativo encontrado", level: .warning)
+            return
+        }
+        Task.detached(priority: .userInitiated) {
+            do {
+                try DevicePatchService.restore(receipt: receipt)
+                await MainActor.run {
+                    enabledPatchIDs.remove(item.id)
+                    isWorking = false
+                    appendLog("Arquivo original restaurado", level: .success)
+                }
+            } catch {
+                await MainActor.run {
+                    isWorking = false
+                    appendLog("Falha ao restaurar: \(error.localizedDescription)", level: .warning)
+                }
+            }
         }
     }
 
@@ -508,7 +593,7 @@ private struct CHZPrivHomeView: View {
                     Text("Log de atividade")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.white)
-                    Text("Sessão atual · \(enabledFiles.filter { $0 }.count) ativo(s)")
+                    Text("Sessão atual · \(enabledPatchIDs.count) ativo(s)")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(AppTheme.secondaryText)
                 }

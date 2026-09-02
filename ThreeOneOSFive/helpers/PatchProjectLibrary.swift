@@ -38,6 +38,54 @@ enum PatchProjectLibrary {
         return root
     }
 
+    static func installBundledFreeFirePatches(
+        bundle: Bundle = .main,
+        fileManager: FileManager = .default
+    ) {
+        guard let urls = bundle.urls(forResourcesWithExtension: "3105", subdirectory: "FreeFirePatches") else {
+            log("patch: no bundled Free Fire packages found")
+            return
+        }
+
+        do {
+            let root = try packageRootURL(fileManager: fileManager)
+            for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+                do {
+                    let data = try readPackage(at: url)
+                    let summary = try PatchPackageCodec.inspect(data)
+                    let decoded: DecodedPatchPackage
+                    if let contentKey = try PatchKeyStore.load(for: summary) {
+                        decoded = try PatchPackageCodec.decode(data, contentKey: contentKey)
+                    } else {
+                        decoded = try PatchPackageCodec.decode(data, password: nil)
+                    }
+
+                    let destination = root.appendingPathComponent(url.lastPathComponent)
+                    let shouldInstall: Bool
+                    if fileManager.fileExists(atPath: destination.path) {
+                        shouldInstall = (try? readPackage(at: destination)) != data
+                    } else {
+                        shouldInstall = true
+                    }
+                    if shouldInstall {
+                        try installImportedPackage(
+                            data: data,
+                            decoded: decoded,
+                            summary: summary,
+                            existingURL: destination,
+                            fileManager: fileManager
+                        )
+                        log("patch: bundled Free Fire package installed — \(decoded.project.name)")
+                    }
+                } catch {
+                    log("patch: bundled Free Fire package skipped — \(url.lastPathComponent)")
+                }
+            }
+        } catch {
+            log("patch: unable to prepare bundled Free Fire packages")
+        }
+    }
+
     static func load(fileManager: FileManager = .default) -> [PatchLibraryItem] {
         guard let root = try? packageRootURL(fileManager: fileManager),
               let urls = try? fileManager.contentsOfDirectory(
