@@ -5,37 +5,26 @@ struct ContentView: View {
     @Environment(\.appLanguage) private var language
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @EnvironmentObject private var patchDraftCoordinator: PatchDraftCoordinator
-    @EnvironmentObject private var patchStore: PatchProjectStore
-    @EnvironmentObject private var repositoryStore: PackageRepositoryStore
-    @AppStorage(FeatureVisibility.developerModeStorageKey)
-    private var developerModeEnabled = false
     @State private var tabNavigation: AppTabNavigationState
-    @State private var showSettings = false
-    @State private var showLogs = false
+    @AppStorage(FeatureVisibility.cleanerStorageKey) private var cleanerEnabled = true
+    @AppStorage(FeatureVisibility.wallpapersStorageKey) private var wallpapersEnabled = true
 
     init() {
 #if targetEnvironment(simulator)
         let arguments = ProcessInfo.processInfo.arguments
         let initialTab: Int
-        if arguments.contains("--simulate-new-tab") {
+        if arguments.contains("--simulate-files-tab") {
             initialTab = 1
-        } else if arguments.contains("--simulate-sources-tab") {
+        } else if arguments.contains("--simulate-patch-tab") {
             initialTab = 2
-        } else if arguments.contains("--simulate-installed-tab")
-                    || arguments.contains("--simulate-patch-tab")
-                    || arguments.contains("--simulate-wallpaper-tab") {
+        } else if arguments.contains("--simulate-cleaner-tab") {
             initialTab = 3
-        } else if arguments.contains("--simulate-files-tab") {
+        } else if arguments.contains("--simulate-wallpaper-tab") {
             initialTab = 4
-        } else if arguments.contains("--simulate-search-tab") {
-            initialTab = 5
         } else {
             initialTab = 0
         }
         _tabNavigation = State(initialValue: AppTabNavigationState(selectedTab: initialTab))
-        _showSettings = State(
-            initialValue: arguments.contains("--simulate-settings")
-        )
 #else
         _tabNavigation = State(initialValue: AppTabNavigationState())
 #endif
@@ -49,24 +38,23 @@ struct ContentView: View {
                 compactLayout
             }
         }
-        .tint(AppTheme.accent)
+        .appTheme()
         .imageScale(.small)
         .onChange(of: patchDraftCoordinator.request?.id) { requestID in
-            if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }
+            if requestID != nil { tabNavigation.select(AppSection.patches.rawValue) }
         }
         .onChange(of: patchDraftCoordinator.importRequest?.id) { requestID in
-            if requestID != nil { tabNavigation.select(AppSection.installed.rawValue) }
+            if requestID != nil { tabNavigation.select(AppSection.patches.rawValue) }
         }
-        .onChange(of: developerModeEnabled) { _ in
+        .onChange(of: cleanerEnabled) { _ in
+            tabNavigation.reconcileSelection(with: featureVisibility)
+        }
+        .onChange(of: wallpapersEnabled) { _ in
             tabNavigation.reconcileSelection(with: featureVisibility)
         }
         .onAppear {
             tabNavigation.reconcileSelection(with: featureVisibility)
         }
-        .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(isPresented: $showLogs) { LogView() }
-        .patchStorePresentation(patchStore)
-        .repositoryStorePresentation(repositoryStore, patchStore: patchStore)
     }
 
     private var compactLayout: some View {
@@ -110,6 +98,7 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("3105")
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationSplitViewColumnWidth(min: 210, ideal: 240, max: 300)
         } detail: {
             sectionContent(selectedVisibleSection)
@@ -122,36 +111,21 @@ struct ContentView: View {
     private func sectionContent(_ section: AppSection) -> some View {
         switch section {
         case .home:
-            RepositoryHomeView(
-                onOpenSettings: openSettings,
-                onOpenLogs: openLogs
-            )
-        case .new:
-            RepositoryNewView(
-                onOpenSettings: openSettings,
-                onOpenLogs: openLogs
-            )
-        case .sources:
-            RepositorySourcesView(
-                onOpenSettings: openSettings,
-                onOpenLogs: openLogs
-            )
-        case .installed:
-            PatchProjectsView(
-                onOpenSettings: openSettings,
-                onOpenLogs: openLogs
+            DashboardView(
+                cleanerEnabled: $cleanerEnabled,
+                wallpapersEnabled: $wallpapersEnabled,
+                wallpapersSupported: wallpapersSupported
             )
         case .files:
             AppDataBrowserView(
-                tabSession: filesTabSession,
-                onOpenSettings: openSettings,
-                onOpenLogs: openLogs
+                tabSession: filesTabSession
             )
-        case .search:
-            RepositorySearchView(
-                onOpenSettings: openSettings,
-                onOpenLogs: openLogs
-            )
+        case .patches:
+            PatchProjectsView()
+        case .cleaner:
+            CleanerView()
+        case .wallpapers:
+            WallpaperLabView()
         }
     }
 
@@ -170,32 +144,23 @@ struct ContentView: View {
     }
 
     private var featureVisibility: FeatureVisibility {
-        FeatureVisibility(developerModeEnabled: developerModeActive)
+        FeatureVisibility(
+            cleanerEnabled: cleanerEnabled,
+            wallpapersEnabled: wallpapersEnabled,
+            wallpapersSupported: wallpapersSupported
+        )
     }
 
-    private var developerModeActive: Bool {
-#if targetEnvironment(simulator)
-        developerModeEnabled
-            || ProcessInfo.processInfo.arguments.contains("--simulate-developer-mode")
-            || ProcessInfo.processInfo.arguments.contains("--simulate-files-tab")
-#else
-        developerModeEnabled
-#endif
+    private var wallpapersSupported: Bool {
+        WallpaperFeatureSupportPolicy.isSupported(major: AppInfo.versionTuple.major)
     }
 
     private var selectedVisibleSection: AppSection {
-        let selected = AppSection(rawValue: tabNavigation.selectedTab)
-        return selected.flatMap {
-            featureVisibility.isVisible($0) ? $0 : nil
-        } ?? .home
-    }
-
-    private func openSettings() {
-        showSettings = true
-    }
-
-    private func openLogs() {
-        showLogs = true
+        guard let section = AppSection(rawValue: tabNavigation.selectedTab),
+              featureVisibility.isVisible(section) else {
+            return .home
+        }
+        return section
     }
 }
 
@@ -222,22 +187,116 @@ private extension AppSection {
     var titleKey: String {
         switch self {
         case .home: return "tab.home"
-        case .new: return "tab.new"
-        case .sources: return "tab.sources"
-        case .installed: return "tab.installed"
         case .files: return "tab.files"
-        case .search: return "tab.search"
+        case .patches: return "tab.patches"
+        case .cleaner: return "tab.cleaner"
+        case .wallpapers: return "tab.wallpapers"
         }
     }
 
     var systemImage: String {
         switch self {
         case .home: return "house.fill"
-        case .new: return "clock.fill"
-        case .sources: return "shippingbox.fill"
-        case .installed: return "tray.full.fill"
         case .files: return "folder.fill"
-        case .search: return "magnifyingglass"
+        case .patches: return "shippingbox.fill"
+        case .cleaner: return "sparkles"
+        case .wallpapers: return "photo.on.rectangle.angled"
+        }
+    }
+}
+
+private struct DashboardView: View {
+    @Environment(\.appLanguage) private var language
+    @EnvironmentObject private var appState: AppState
+    @State private var showSettings = false
+    @State private var showLogs = false
+    @Binding var cleanerEnabled: Bool
+    @Binding var wallpapersEnabled: Bool
+    let wallpapersSupported: Bool
+
+    var body: some View {
+        NavigationStack {
+            List {
+                deviceSection
+                featuresSection
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(AppTheme.accent)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showLogs = true } label: {
+                        Image(systemName: "apple.terminal")
+                    }
+                    .accessibilityLabel(language.text("accessibility.open_logs"))
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel(language.text("accessibility.open_settings"))
+                }
+            }
+            .sheet(isPresented: $showSettings) { SettingsView() }
+            .sheet(isPresented: $showLogs) { LogView() }
+        }
+    }
+
+    private var featuresSection: some View {
+        Section {
+            Toggle(isOn: $cleanerEnabled) {
+                Label(language.text("tab.cleaner"), systemImage: "sparkles")
+            }
+            if wallpapersSupported {
+                Toggle(isOn: $wallpapersEnabled) {
+                    Label(language.text("tab.wallpapers"), systemImage: "photo.on.rectangle.angled")
+                }
+            }
+        } header: {
+            Text(language.text("dashboard.features"))
+        } footer: {
+            Text(language.text("dashboard.features_footer"))
+        }
+    }
+
+    private var deviceSection: some View {
+        Section {
+            LabeledContent(language.text("dashboard.hardware_model")) {
+                Text(AppInfo.displayMachineName)
+                    .font(.body.monospaced())
+            }
+            LabeledContent(language.text("settings.ios_version")) {
+                Text("\(AppInfo.osVersion) (\(AppInfo.osBuild))")
+                    .font(.body.monospaced())
+            }
+            HStack {
+                Text(language.text("settings.compatibility"))
+                Spacer()
+                Text(language.text(appState.isSupported ? "settings.supported" : "settings.unsupported"))
+                .foregroundStyle(appState.isSupported ? AppTheme.success : Color.red)
+            }
+
+            if appState.kernelExploitApplicable && AppInfo.versionTuple.major < 26 {
+                HStack {
+                    Text(language.text("dashboard.kernel_status"))
+                    Spacer()
+                    if appState.kernelExploitRunning {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small)
+                            Text(language.text("dashboard.kernel_running"))
+                                .font(.subheadline)
+                                .foregroundStyle(AppTheme.secondaryText)
+                        }
+                    } else {
+                        Text(language.text(appState.exploitStatus.isSuccess ? "dashboard.kernel_active" : "dashboard.kernel_inactive"))
+                        .foregroundStyle(appState.exploitStatus.isSuccess ? AppTheme.success : AppTheme.secondaryText)
+                    }
+                }
+            }
+        } header: {
+            Text(language.text("common.device"))
+        } footer: {
+            Text(language.text("settings.supported_range_summary"))
         }
     }
 }

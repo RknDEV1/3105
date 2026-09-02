@@ -93,9 +93,9 @@ struct FilesTabStrip: View {
             .buttonStyle(.plain)
             .accessibilityLabel(language.text("browser.close_tab"))
         }
-        .foregroundStyle(isSelected ? AppTheme.accent : Color.secondary)
+        .foregroundStyle(isSelected ? AppTheme.accent : AppTheme.secondaryText)
         .background(
-            isSelected ? AppTheme.accent.opacity(0.12) : Color.secondary.opacity(0.08),
+            isSelected ? AppTheme.accent.opacity(0.12) : AppTheme.secondaryText.opacity(0.08),
             in: RoundedRectangle(cornerRadius: 8, style: .continuous)
         )
         .contextMenu {

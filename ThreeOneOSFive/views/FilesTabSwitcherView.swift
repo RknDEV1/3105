@@ -73,17 +73,17 @@ struct FilesTabSwitcherView: View {
     private func tabRow(_ tab: FilesTabState) -> some View {
         HStack(spacing: 12) {
             Image(systemName: tab.id == session.selectedTabID ? "folder.fill" : "folder")
-                .foregroundStyle(tab.id == session.selectedTabID ? AppTheme.accent : Color.secondary)
+                .foregroundStyle(tab.id == session.selectedTabID ? AppTheme.accent : AppTheme.secondaryText)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(tab.displayTitle(defaultTitle: language.text("browser.tabs_root")))
                     .font(.body.weight(tab.id == session.selectedTabID ? .semibold : .regular))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(1)
                 Text(tab.currentPath ?? language.text("browser.tabs_root_detail"))
                     .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.secondaryText)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }

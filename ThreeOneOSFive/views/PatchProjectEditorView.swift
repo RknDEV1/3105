@@ -9,8 +9,6 @@ struct PatchProjectEditorView: View {
     let onSave: (PatchProject, String?) -> Void
 
     @State private var name: String
-    @State private var author: String
-    @State private var isPrivate: Bool
     @State private var bundleID: String
     @State private var bundleIdentifiers: [String]
     @State private var directories: [PatchDirectory]
@@ -30,8 +28,6 @@ struct PatchProjectEditorView: View {
         self.initialDraft = initialDraft
         self.onSave = onSave
         _name = State(initialValue: existingProject?.name ?? initialDraft?.name ?? "")
-        _author = State(initialValue: existingProject?.author ?? "")
-        _isPrivate = State(initialValue: existingProject?.isPrivate ?? false)
         _bundleID = State(initialValue: initialDraft?.bundleIdentifiers.first ?? "")
         _bundleIdentifiers = State(
             initialValue: existingProject?.bundleIdentifiers
@@ -50,9 +46,6 @@ struct PatchProjectEditorView: View {
                 Section(language.text("patch.project")) {
                     TextField(language.text("patch.project_name"), text: $name)
                         .textInputAutocapitalization(.words)
-                    TextField(language.text("patch.author_optional"), text: $author)
-                        .textInputAutocapitalization(.words)
-                        .autocorrectionDisabled()
                 }
 
                 if existingProject == nil {
@@ -61,7 +54,7 @@ struct PatchProjectEditorView: View {
                             LabeledContent(language.text("patch.target_bundle")) {
                                 Text(capturedBundle)
                                     .font(.caption.monospaced())
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(AppTheme.secondaryText)
                             }
                         } else {
                             TextField("com.example.app", text: $bundleID)
@@ -87,7 +80,7 @@ struct PatchProjectEditorView: View {
                                 Spacer(minLength: 8)
                                 Image(systemName: "chevron.right")
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(AppTheme.tertiaryText)
                             }
                             .contentShape(Rectangle())
                         }
@@ -106,7 +99,7 @@ struct PatchProjectEditorView: View {
                         if !directories.isEmpty {
                             LabeledContent(language.text("patch.folders")) {
                                 Text("\(directories.count)")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(AppTheme.secondaryText)
                             }
                         }
                     } header: {
@@ -132,22 +125,6 @@ struct PatchProjectEditorView: View {
                     Text(language.text(existingProject == nil
                         ? "patch.password_immutable_footer"
                         : "patch.password_existing_footer"))
-                }
-
-                Section {
-                    Toggle(isOn: $isPrivate) {
-                        Label(
-                            language.text("patch.private"),
-                            systemImage: "eye.slash.fill"
-                        )
-                    }
-                    .disabled(existingProject != nil)
-                } header: {
-                    Text(language.text("patch.privacy"))
-                } footer: {
-                    Text(language.text(existingProject == nil
-                        ? "patch.private_footer"
-                        : "patch.private_existing_footer"))
                 }
 
                 if let validationMessageKey {
@@ -183,10 +160,10 @@ struct PatchProjectEditorView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(rule.bundleID)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(AppTheme.primaryText)
             Text(rule.relativePath)
                 .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
                 .lineLimit(2)
             if rule.hasReplacement {
                 Text(rule.replacementFilename)
@@ -195,7 +172,7 @@ struct PatchProjectEditorView: View {
             } else {
                 Label(language.text("patch.replacement_required"), systemImage: "exclamationmark.circle.fill")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(AppTheme.accent)
             }
         }
         .padding(.vertical, 3)
@@ -203,21 +180,8 @@ struct PatchProjectEditorView: View {
 
     private func save() {
         let projectName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let projectAuthor = author.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !projectName.isEmpty, projectName.utf8.count <= 120 else {
             validationMessageKey = "patch.error.invalid_project"
-            return
-        }
-        guard projectAuthor.utf8.count <= PatchPackageLimits.maximumAuthorBytes,
-              !projectAuthor.unicodeScalars.contains(
-                where: CharacterSet.controlCharacters.contains
-              ) else {
-            validationMessageKey = "patch.error.invalid_author"
-            return
-        }
-        author = projectAuthor
-        if existingProject == nil, isPrivate, password.isEmpty {
-            validationMessageKey = "patch.error.private_password"
             return
         }
         if existingProject == nil, initialDraft == nil {
@@ -252,8 +216,6 @@ struct PatchProjectEditorView: View {
         let project = PatchProject(
             id: existingProject?.id ?? UUID(),
             name: projectName,
-            author: author,
-            isPrivate: isPrivate,
             createdAt: existingProject?.createdAt ?? Date(),
             updatedAt: Date(),
             bundleIdentifiers: bundleIdentifiers,
@@ -329,18 +291,18 @@ struct PatchRuleEditorView: View {
                                 Text(replacementFilename.isEmpty
                                      ? language.text("patch.choose_file")
                                      : replacementFilename)
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(AppTheme.primaryText)
                                     .lineLimit(1)
                                 Text(language.text(replacementFilename.isEmpty
                                      ? "patch.replacement_required"
                                      : "patch.change_replacement"))
                                     .font(.caption)
-                                    .foregroundStyle(replacementFilename.isEmpty ? Color.orange : Color.secondary)
+                                    .foregroundStyle(replacementFilename.isEmpty ? AppTheme.accent : AppTheme.secondaryText)
                             }
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption.weight(.semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(AppTheme.tertiaryText)
                         }
                         .contentShape(Rectangle())
                     }
@@ -350,7 +312,7 @@ struct PatchRuleEditorView: View {
                             ProgressView()
                             Text(language.text("patch.importing_replacement"))
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.secondaryText)
                         }
                     }
                     if !replacementFilename.isEmpty {

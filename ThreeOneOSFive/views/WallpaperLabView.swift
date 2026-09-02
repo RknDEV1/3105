@@ -11,22 +11,20 @@ struct WallpaperLabView: View {
     @State private var report: WallpaperAccessReport?
     @State private var accessError: String?
     @State private var packages: [WallpaperStagedPackage] = []
+    @State private var receipts: [WallpaperInstallReceipt] = []
+    @State private var selectedPackageID: UUID?
     @State private var isBusy = false
     @State private var operationKey = "wallpaper.checking"
     @State private var showImporter = false
     @State private var alert: WallpaperLabAlert?
     @State private var hasLoaded = false
-    @State private var showSimulatedPackageDetail = false
 
-    let onOpenSettings: () -> Void
-    let onOpenLogs: () -> Void
+    private var selectedPackage: WallpaperStagedPackage? {
+        packages.first { $0.id == selectedPackageID }
+    }
 
-    init(
-        onOpenSettings: @escaping () -> Void = {},
-        onOpenLogs: @escaping () -> Void = {}
-    ) {
-        self.onOpenSettings = onOpenSettings
-        self.onOpenLogs = onOpenLogs
+    private var activeReceipts: [WallpaperInstallReceipt] {
+        receipts.filter { $0.status == .installed || $0.status == .preparing }
     }
 
     var body: some View {
@@ -34,6 +32,7 @@ struct WallpaperLabView: View {
             List {
                 accessSection
                 packagesSection
+                if !activeReceipts.isEmpty { resetSection }
             }
             .listStyle(.insetGrouped)
             .navigationTitle(language.text("wallpaper.title"))
@@ -56,31 +55,11 @@ struct WallpaperLabView: View {
                 )
                 .ignoresSafeArea()
             }
-            .navigationDestination(isPresented: $showSimulatedPackageDetail) {
-                if let package = packages.first {
-                    WallpaperPackageDetailView(
-                        package: package,
-                        canInstall: report?.canInstall == true && !isBusy,
-                        onApply: {
-                            alert = WallpaperLabAlert(kind: .install(package))
-                        }
-                    )
-                }
-            }
             .onAppear {
                 guard !hasLoaded else { return }
                 hasLoaded = true
                 reloadLocalData()
                 checkAccess()
-#if targetEnvironment(simulator)
-                if ProcessInfo.processInfo.arguments.contains(
-                    "--simulate-wallpaper-detail"
-                ), !packages.isEmpty {
-                    DispatchQueue.main.async {
-                        showSimulatedPackageDetail = true
-                    }
-                }
-#endif
             }
         }
     }
@@ -97,11 +76,11 @@ struct WallpaperLabView: View {
                             ? "checkmark.shield.fill"
                             : "exclamationmark.triangle.fill"
                     )
-                    .foregroundStyle(report.canInstall ? Color.green : Color.orange)
+                    .foregroundStyle(report.canInstall ? AppTheme.success : AppTheme.accent)
                     Spacer()
                     Text("MHA-C2")
                         .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                 }
                 Text(
                     language.text(
@@ -112,7 +91,7 @@ struct WallpaperLabView: View {
                     )
                 )
                 .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
             } else if let accessError {
                 Label(accessError, systemImage: "xmark.shield.fill")
                     .foregroundStyle(.red)
@@ -137,7 +116,7 @@ struct WallpaperLabView: View {
                         .font(.headline)
                     Text(language.text("wallpaper.empty_packages_message"))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                         .multilineTextAlignment(.center)
                     Button(language.text("wallpaper.import")) { showImporter = true }
                         .buttonStyle(.bordered)
@@ -146,18 +125,21 @@ struct WallpaperLabView: View {
                 .padding(.vertical, 20)
             } else {
                 ForEach(packages) { package in
-                    NavigationLink {
-                        WallpaperPackageDetailView(
-                            package: package,
-                            canInstall: report?.canInstall == true && !isBusy,
-                            onApply: {
-                                alert = WallpaperLabAlert(kind: .install(package))
-                            }
-                        )
+                    Button {
+                        selectedPackageID = package.id
                     } label: {
                         packageRow(package)
                     }
+                    .buttonStyle(.plain)
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            alert = WallpaperLabAlert(kind: .deletePackage(package))
+                        } label: {
+                            Label(language.text("browser.delete"), systemImage: "trash")
+                        }
+                    }
                 }
+                installAction
             }
         } header: {
             Text(language.text("wallpaper.packages"))
@@ -172,7 +154,7 @@ struct WallpaperLabView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(package.displayName)
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(1)
                 Text(
                     language.text(
@@ -182,11 +164,35 @@ struct WallpaperLabView: View {
                     )
                 )
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
             }
+            Spacer(minLength: 8)
+            Image(
+                systemName: selectedPackageID == package.id
+                    ? "checkmark.circle.fill" : "circle"
+            )
+            .font(.system(size: AppTheme.selectionIconSize, weight: .medium))
+            .foregroundStyle(
+                selectedPackageID == package.id ? AppTheme.accent : AppTheme.secondaryText
+            )
         }
         .contentShape(Rectangle())
         .padding(.vertical, 3)
+    }
+
+    private var resetSection: some View {
+        Section {
+            LabeledContent(language.text("wallpaper.installed_by_3105")) {
+                Text("\(activeReceipts.reduce(0) { $0 + $1.installedDescriptors.count })")
+                    .monospacedDigit()
+            }
+            Button(role: .destructive) {
+                alert = WallpaperLabAlert(kind: .reset(activeReceipts))
+            } label: {
+                Label(language.text("wallpaper.reset"), systemImage: "arrow.counterclockwise")
+            }
+            .disabled(isBusy)
+        } footer: { Text(language.text("wallpaper.reset_footer")) }
     }
 
     @ToolbarContentBuilder
@@ -205,11 +211,21 @@ struct WallpaperLabView: View {
             .disabled(isBusy)
             .accessibilityLabel(language.text("wallpaper.import"))
         }
-        AppUtilityToolbar(
-            language: language,
-            onOpenSettings: onOpenSettings,
-            onOpenLogs: onOpenLogs
-        )
+    }
+
+    private var installAction: some View {
+        Button {
+            if let selectedPackage {
+                alert = WallpaperLabAlert(kind: .install(selectedPackage))
+            }
+        } label: {
+            Text(language.text("wallpaper.install"))
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+        .disabled(selectedPackage == nil || report?.canInstall != true || isBusy)
+        .padding(.vertical, 4)
     }
 
     @ViewBuilder
@@ -248,6 +264,29 @@ struct WallpaperLabView: View {
                 },
                 secondaryButton: .cancel(Text(language.text("common.cancel")))
             )
+        case .reset(let activeReceipts):
+            return Alert(
+                title: Text(language.text("wallpaper.reset_title")),
+                message: Text(
+                    language.text(
+                        "wallpaper.reset_message",
+                        Int64(activeReceipts.reduce(0) { $0 + $1.installedDescriptors.count })
+                    )
+                ),
+                primaryButton: .destructive(Text(language.text("wallpaper.reset"))) {
+                    resetAllWallpapers(activeReceipts)
+                },
+                secondaryButton: .cancel(Text(language.text("common.cancel")))
+            )
+        case .deletePackage(let package):
+            return Alert(
+                title: Text(language.text("wallpaper.delete_title")),
+                message: Text(language.text("wallpaper.delete_message", package.displayName)),
+                primaryButton: .destructive(Text(language.text("browser.delete"))) {
+                    delete(package)
+                },
+                secondaryButton: .cancel(Text(language.text("common.cancel")))
+            )
         case .message(let titleKey, let message):
             return Alert(
                 title: Text(language.text(titleKey)),
@@ -259,6 +298,12 @@ struct WallpaperLabView: View {
 
     private func reloadLocalData() {
         packages = WallpaperPackageStore.packages()
+        if selectedPackageID == nil { selectedPackageID = packages.first?.id }
+        if let backupRoot = try? WallpaperPackageStore.backupRoot() {
+            receipts = WallpaperInstaller.receipts(in: backupRoot).filter {
+                $0.status == .installed || $0.status == .preparing
+            }
+        }
     }
 
     private func checkAccess() {
@@ -339,11 +384,6 @@ struct WallpaperLabView: View {
                     layout: currentReport.layout,
                     backupRoot: backupRoot
                 )
-                do {
-                    try WallpaperPackageStore.delete(package)
-                } catch {
-                    log("wallpaper: staged package leftover after apply")
-                }
                 let refreshedReport = try deviceAccessReport(
                     requiredExtensionIdentifiers: requiredExtensions
                 )
@@ -377,6 +417,67 @@ struct WallpaperLabView: View {
                     )
                 }
             }
+        }
+    }
+
+    private func resetAllWallpapers(_ receiptsToReset: [WallpaperInstallReceipt]) {
+        guard !isBusy else { return }
+        isBusy = true
+        operationKey = "wallpaper.restoring"
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = Result { () throws -> WallpaperAccessReport in
+                guard let path = ContainerStore.resolveAppContainerPath(
+                    bundleID: "com.apple.PosterBoard"
+                ) else { throw WallpaperLabError.accessDenied }
+                let containerURL = URL(fileURLWithPath: path, isDirectory: true)
+                let backupRoot = try WallpaperPackageStore.backupRoot()
+                for receipt in receiptsToReset {
+                    try WallpaperInstaller.restore(
+                        receipt: receipt,
+                        containerURL: containerURL,
+                        rootValidator: { ContainerStore.isApplicationContainerPath($0.path) }
+                    )
+                    try WallpaperInstaller.removeReceipt(receipt, from: backupRoot)
+                }
+                return try deviceAccessReport()
+            }
+            DispatchQueue.main.async {
+                isBusy = false
+                switch result {
+                case .success(let refreshedReport):
+                    reloadLocalData()
+                    report = refreshedReport
+                    _ = openApplicationForBundleID("com.apple.PosterBoard")
+                    alert = WallpaperLabAlert(
+                        kind: .message(
+                            titleKey: "wallpaper.reset_done_title",
+                            message: language.text("wallpaper.reset_done_message")
+                        )
+                    )
+                case .failure(let error):
+                    alert = WallpaperLabAlert(
+                        kind: .message(
+                            titleKey: "wallpaper.operation_failed",
+                            message: message(for: error)
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private func delete(_ package: WallpaperStagedPackage) {
+        do {
+            try WallpaperPackageStore.delete(package)
+            if selectedPackageID == package.id { selectedPackageID = nil }
+            reloadLocalData()
+        } catch {
+            alert = WallpaperLabAlert(
+                kind: .message(
+                    titleKey: "wallpaper.operation_failed",
+                    message: message(for: error)
+                )
+            )
         }
     }
 
@@ -424,452 +525,14 @@ struct WallpaperLabView: View {
     }
 }
 
-private struct WallpaperPackageDetailView: View {
-    @Environment(\.appLanguage) private var language
-    let package: WallpaperStagedPackage
-    let canInstall: Bool
-    let onApply: () -> Void
-
-    var body: some View {
-        List {
-            Section {
-                HStack(spacing: 14) {
-                    AppRowIcon(
-                        systemName: "photo.on.rectangle.angled",
-                        symbolSize: 24,
-                        frameSize: 52
-                    )
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(package.displayName)
-                            .font(.title3.weight(.bold))
-                        Text(language.text(
-                            "wallpaper.package_summary",
-                            Int64(package.payload.descriptors.count),
-                            sizeText(package.payload.totalBytes)
-                        ))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        Text(language.text(
-                            "wallpaper.package_files",
-                            Int64(package.payload.fileCount)
-                        ))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 6)
-            }
-
-            Section(language.text("wallpaper.package_details")) {
-                ForEach(package.payload.descriptors) { descriptor in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(descriptor.directoryURL.lastPathComponent)
-                            .font(.body.weight(.semibold))
-                        Text(descriptor.extensionIdentifier)
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                        Text(
-                            "\(descriptor.fileCount) · \(sizeText(descriptor.byteCount))"
-                        )
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 3)
-                }
-            }
-
-            Section {
-                Button(action: onApply) {
-                    Text(language.text("wallpaper.install"))
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!canInstall)
-            } footer: {
-                Text(language.text("wallpaper.after_apply_guide"))
-            }
-        }
-        .listStyle(.insetGrouped)
-        .navigationTitle(package.displayName)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func sizeText(_ bytes: Int64) -> String {
-        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
-    }
-}
-
-struct InstalledWallpaperPackageDetailView: View {
-    @Environment(\.appLanguage) private var language
-    @Environment(\.dismiss) private var dismiss
-    @State private var report: WallpaperAccessReport?
-    @State private var isBusy = true
-    @State private var operationKey = "wallpaper.checking"
-    @State private var alert: InstalledWallpaperAlert?
-
-    let package: WallpaperStagedPackage
-    let onApplied: () -> Void
-
-    var body: some View {
-        WallpaperPackageDetailView(
-            package: package,
-            canInstall: report?.canInstall == true && !isBusy,
-            onApply: {
-                alert = InstalledWallpaperAlert(kind: .confirmInstall)
-            }
-        )
-        .overlay { busyOverlay }
-        .alert(item: $alert, content: alertContent)
-        .onAppear(perform: checkAccess)
-    }
-
-    @ViewBuilder
-    private var busyOverlay: some View {
-        if isBusy {
-            ZStack {
-                Color.black.opacity(0.12).ignoresSafeArea()
-                VStack(spacing: 12) {
-                    ProgressView()
-                    Text(language.text(operationKey))
-                        .font(.subheadline.weight(.medium))
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 18)
-                .background(
-                    .regularMaterial,
-                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                )
-            }
-        }
-    }
-
-    private func alertContent(_ alert: InstalledWallpaperAlert) -> Alert {
-        switch alert.kind {
-        case .confirmInstall:
-            return Alert(
-                title: Text(language.text("wallpaper.install_warning_title")),
-                message: Text(language.text(
-                    "wallpaper.install_warning_message",
-                    package.displayName,
-                    Int64(package.payload.descriptors.count),
-                    AppInfo.osVersion,
-                    AppInfo.osBuild
-                )),
-                primaryButton: .destructive(
-                    Text(language.text("wallpaper.install")),
-                    action: install
-                ),
-                secondaryButton: .cancel(Text(language.text("common.cancel")))
-            )
-        case .success(let openedPosterBoard):
-            return Alert(
-                title: Text(language.text("wallpaper.install_done_title")),
-                message: Text(language.text(
-                    openedPosterBoard
-                        ? "wallpaper.install_done_opened"
-                        : "wallpaper.install_done_manual"
-                )),
-                dismissButton: .default(Text(language.text("common.ok"))) {
-                    dismiss()
-                }
-            )
-        case .failure(let message):
-            return Alert(
-                title: Text(language.text("wallpaper.operation_failed")),
-                message: Text(message),
-                dismissButton: .default(Text(language.text("common.ok")))
-            )
-        }
-    }
-
-    private func checkAccess() {
-        guard isBusy else { return }
-        operationKey = "wallpaper.checking"
-        DispatchQueue.global(qos: .userInitiated).async {
-            let requiredExtensions = Set(
-                package.payload.descriptors.map(\.extensionIdentifier)
-            )
-            let result = Result {
-                try WallpaperDeviceAccessService.report(
-                    requiredExtensionIdentifiers: requiredExtensions
-                )
-            }
-            DispatchQueue.main.async {
-                isBusy = false
-                switch result {
-                case .success(let newReport):
-                    report = newReport
-                case .failure(let error):
-                    report = nil
-                    alert = InstalledWallpaperAlert(
-                        kind: .failure(message(for: error))
-                    )
-                }
-            }
-        }
-    }
-
-    private func install() {
-        guard !isBusy else { return }
-        isBusy = true
-        operationKey = "wallpaper.installing"
-        DispatchQueue.global(qos: .userInitiated).async {
-            let result = Result {
-                try WallpaperDeviceAccessService.install(package)
-            }
-            DispatchQueue.main.async {
-                isBusy = false
-                switch result {
-                case .success(let (receipt, refreshedReport)):
-                    report = refreshedReport
-                    onApplied()
-                    log(
-                        "wallpaper: installed descriptors=" +
-                            "\(receipt.installedDescriptors.count)"
-                    )
-                    let opened = openApplicationForBundleID("com.apple.PosterBoard")
-                    alert = InstalledWallpaperAlert(kind: .success(opened))
-                case .failure(let error):
-                    log("wallpaper: install failed \(error.localizedDescription)")
-                    alert = InstalledWallpaperAlert(
-                        kind: .failure(message(for: error))
-                    )
-                }
-            }
-        }
-    }
-
-    private func message(for error: Error) -> String {
-        if let wallpaperError = error as? WallpaperLabError {
-            return language.text(wallpaperError.localizationKey)
-        }
-        return language.text("wallpaper.error.unknown")
-    }
-}
-
-private struct InstalledWallpaperAlert: Identifiable {
-    let id = UUID()
-    let kind: Kind
-
-    enum Kind {
-        case confirmInstall
-        case success(Bool)
-        case failure(String)
-    }
-}
-
-struct WallpaperResetSettingsView: View {
-    @Environment(\.appLanguage) private var language
-    @State private var report: WallpaperAccessReport?
-    @State private var isBusy = false
-    @State private var operationKey = "wallpaper.checking"
-    @State private var alert: WallpaperResetAlert?
-
-    var body: some View {
-        List {
-            Section(language.text("wallpaper.access")) {
-                if let report {
-                    Label(
-                        language.text(
-                            report.canInstall
-                                ? "wallpaper.access_ready"
-                                : "wallpaper.access_read_only"
-                        ),
-                        systemImage: report.canInstall
-                            ? "checkmark.shield.fill"
-                            : "exclamationmark.triangle.fill"
-                    )
-                    .foregroundStyle(report.canInstall ? Color.green : Color.orange)
-                    LabeledContent(language.text("wallpaper.custom_count")) {
-                        Text("\(report.customDescriptorCount)")
-                            .monospacedDigit()
-                    }
-                } else if !isBusy {
-                    Label(
-                        language.text("wallpaper.error.access"),
-                        systemImage: "xmark.shield.fill"
-                    )
-                    .foregroundStyle(.red)
-                }
-            }
-
-            if let report, report.customDescriptorCount > 0 {
-                Section {
-                    Button(role: .destructive) {
-                        alert = WallpaperResetAlert(kind: .confirm)
-                    } label: {
-                        Label(
-                            language.text("wallpaper.reset"),
-                            systemImage: "arrow.counterclockwise"
-                        )
-                    }
-                    .disabled(isBusy || !report.canInstall)
-                } footer: {
-                    Text(language.text("wallpaper.reset_footer"))
-                }
-            } else if report != nil {
-                Section {
-                    VStack(spacing: 10) {
-                        Image(systemName: "photo.stack")
-                            .font(.system(
-                                size: AppTheme.emptyIconSize,
-                                weight: .light
-                            ))
-                            .foregroundStyle(AppTheme.accent)
-                        Text(language.text("wallpaper.no_custom_title"))
-                            .font(.headline)
-                        Text(language.text("wallpaper.no_custom_message"))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 28)
-                }
-            }
-        }
-        .listStyle(.insetGrouped)
-        .navigationTitle(language.text("wallpaper.reset"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: checkAccess) {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .disabled(isBusy)
-                .accessibilityLabel(language.text("wallpaper.try_again"))
-            }
-        }
-        .overlay { busyOverlay }
-        .alert(item: $alert, content: alertContent)
-        .onAppear(perform: checkAccess)
-    }
-
-    @ViewBuilder
-    private var busyOverlay: some View {
-        if isBusy {
-            ZStack {
-                Color.black.opacity(0.12).ignoresSafeArea()
-                VStack(spacing: 12) {
-                    ProgressView()
-                    Text(language.text(operationKey))
-                        .font(.subheadline.weight(.medium))
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 18)
-                .background(
-                    .regularMaterial,
-                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
-                )
-            }
-        }
-    }
-
-    private func alertContent(_ alert: WallpaperResetAlert) -> Alert {
-        switch alert.kind {
-        case .confirm:
-            return Alert(
-                title: Text(language.text("wallpaper.reset_title")),
-                message: Text(language.text(
-                    "wallpaper.reset_message",
-                    Int64(report?.customDescriptorCount ?? 0)
-                )),
-                primaryButton: .destructive(
-                    Text(language.text("wallpaper.reset")),
-                    action: resetCollections
-                ),
-                secondaryButton: .cancel(Text(language.text("common.cancel")))
-            )
-        case .success:
-            return Alert(
-                title: Text(language.text("wallpaper.reset_done_title")),
-                message: Text(language.text("wallpaper.reset_done_message")),
-                dismissButton: .default(Text(language.text("common.ok")))
-            )
-        case .failure(let message):
-            return Alert(
-                title: Text(language.text("wallpaper.operation_failed")),
-                message: Text(message),
-                dismissButton: .default(Text(language.text("common.ok")))
-            )
-        }
-    }
-
-    private func checkAccess() {
-        guard !isBusy else { return }
-        isBusy = true
-        operationKey = "wallpaper.checking"
-        DispatchQueue.global(qos: .userInitiated).async {
-            let result = Result {
-                try WallpaperDeviceAccessService.report()
-            }
-            DispatchQueue.main.async {
-                isBusy = false
-                switch result {
-                case .success(let newReport):
-                    report = newReport
-                case .failure(let error):
-                    report = nil
-                    alert = WallpaperResetAlert(
-                        kind: .failure(message(for: error))
-                    )
-                }
-            }
-        }
-    }
-
-    private func resetCollections() {
-        guard !isBusy else { return }
-        isBusy = true
-        operationKey = "wallpaper.restoring"
-        DispatchQueue.global(qos: .userInitiated).async {
-            let result = Result {
-                try WallpaperDeviceAccessService.resetCustomCollections()
-            }
-            DispatchQueue.main.async {
-                isBusy = false
-                switch result {
-                case .success(let (removed, refreshedReport)):
-                    report = refreshedReport
-                    log("wallpaper: reset removed \(removed) custom descriptors")
-                    _ = openApplicationForBundleID("com.apple.PosterBoard")
-                    alert = WallpaperResetAlert(kind: .success)
-                case .failure(let error):
-                    alert = WallpaperResetAlert(
-                        kind: .failure(message(for: error))
-                    )
-                }
-            }
-        }
-    }
-
-    private func message(for error: Error) -> String {
-        if let wallpaperError = error as? WallpaperLabError {
-            return language.text(wallpaperError.localizationKey)
-        }
-        return language.text("wallpaper.error.unknown")
-    }
-}
-
-private struct WallpaperResetAlert: Identifiable {
-    let id = UUID()
-    let kind: Kind
-
-    enum Kind {
-        case confirm
-        case success
-        case failure(String)
-    }
-}
-
 private struct WallpaperLabAlert: Identifiable {
     let id = UUID()
     let kind: Kind
 
     enum Kind {
         case install(WallpaperStagedPackage)
+        case reset([WallpaperInstallReceipt])
+        case deletePackage(WallpaperStagedPackage)
         case message(titleKey: String, message: String)
     }
 }

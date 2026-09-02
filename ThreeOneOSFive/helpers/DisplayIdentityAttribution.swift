@@ -126,7 +126,7 @@ struct DisplayAttributionSheet: View {
                                 .font(.headline)
                             Text(language.text("attribution.subtitle"))
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.secondaryText)
                         }
                     }
                     .padding(.vertical, 4)
@@ -137,7 +137,7 @@ struct DisplayAttributionSheet: View {
                         LabeledContent(language.text("attribution.url")) {
                             Text(url.absoluteString)
                                 .font(.caption.monospaced())
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.secondaryText)
                                 .multilineTextAlignment(.trailing)
                                 .textSelection(.enabled)
                         }

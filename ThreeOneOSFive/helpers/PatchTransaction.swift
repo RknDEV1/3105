@@ -8,25 +8,6 @@ struct PatchTransactionReceipt: Equatable, Identifiable {
     let journalURL: URL
 }
 
-enum PatchTargetChangeKind: Equatable {
-    case modified
-    case missing
-}
-
-struct PatchTargetChange: Equatable {
-    let bundleID: String
-    let relativePath: String
-    let kind: PatchTargetChangeKind
-
-    var displayPath: String {
-        bundleID + "/" + relativePath
-    }
-}
-
-struct PatchRestoreInspection: Equatable {
-    let changedTargets: [PatchTargetChange]
-}
-
 enum PatchTransaction {
     private enum Status: String, Codable {
         case prepared
@@ -44,7 +25,6 @@ enum PatchTransaction {
         let backupFilename: String?
         let originalDigest: Data?
         let replacementDigest: Data
-        let appliedFilename: String?
     }
 
     private struct DirectoryRecord: Codable {
@@ -76,24 +56,7 @@ enum PatchTransaction {
         let target: URL
     }
 
-    private struct ResolvedRecord {
-        let record: Record
-        let target: URL
-    }
-
-    private struct CurrentFileSnapshot {
-        let target: URL
-        let existed: Bool
-        let snapshotURL: URL?
-    }
-
-    private enum AppliedSource {
-        case file(URL)
-        case data(Data)
-    }
-
-    private static let minimumSchemaVersion = 1
-    private static let schemaVersion = 2
+    private static let schemaVersion = 1
     private static let journalFilename = "journal.plist"
 
     static func apply(
@@ -105,13 +68,6 @@ enum PatchTransaction {
     ) throws -> PatchTransactionReceipt {
         guard !project.rules.isEmpty || !project.directories.isEmpty else {
             throw PatchPackageError.invalidProject
-        }
-        guard latestReceipt(
-            projectID: project.id,
-            backupRoot: backupRoot,
-            fileManager: fileManager
-        ) == nil else {
-            throw PatchPackageError.projectAlreadyApplied
         }
 
         var roots: [String: URL] = [:]
@@ -189,20 +145,6 @@ enum PatchTransaction {
             resolvedRules.append(ResolvedRule(rule: rule, containerRoot: root, target: target))
         }
 
-        let occupied = appliedTargetKeys(
-            backupRoot: backupRoot,
-            excludingProjectID: project.id,
-            fileManager: fileManager
-        )
-        for resolved in resolvedRules {
-            let occupancyKey = resolved.rule.bundleID + "\0" + resolved.rule.relativePath
-            if occupied.contains(occupancyKey) {
-                throw PatchPackageError.targetOccupied(
-                    resolved.rule.bundleID + "/" + resolved.rule.relativePath
-                )
-            }
-        }
-
         let transactionID = UUID()
         let transactionDirectory = backupRoot
             .appendingPathComponent(project.id.uuidString, isDirectory: true)
@@ -226,22 +168,11 @@ enum PatchTransaction {
             for resolved in resolvedRules {
                 let existed = fileManager.fileExists(atPath: resolved.target.path)
                 let backupFilename = existed ? "\(resolved.rule.id.uuidString).original" : nil
-                let appliedFilename = project.isPrivate
-                    ? nil
-                    : "\(resolved.rule.id.uuidString).applied"
                 var originalDigest: Data?
                 if let backupFilename {
                     let backupURL = transactionDirectory.appendingPathComponent(backupFilename)
                     try fileManager.copyItem(at: resolved.target, to: backupURL)
                     originalDigest = try digestFile(backupURL)
-                }
-                let replacementDigest = digest(resolved.rule.replacementData)
-                if let appliedFilename {
-                    let appliedURL = transactionDirectory.appendingPathComponent(appliedFilename)
-                    try resolved.rule.replacementData.write(to: appliedURL, options: .atomic)
-                    guard try digestFile(appliedURL) == replacementDigest else {
-                        throw PatchPackageError.applyFailed
-                    }
                 }
                 records.append(Record(
                     ruleID: resolved.rule.id,
@@ -251,8 +182,7 @@ enum PatchTransaction {
                     originalExisted: existed,
                     backupFilename: backupFilename,
                     originalDigest: originalDigest,
-                    replacementDigest: replacementDigest,
-                    appliedFilename: appliedFilename
+                    replacementDigest: digest(resolved.rule.replacementData)
                 ))
             }
         } catch let error as PatchPackageError {
@@ -322,170 +252,46 @@ enum PatchTransaction {
         }
     }
 
-    static func inspectRestore(
+    static func restore(
         receipt: PatchTransactionReceipt,
         containerResolver: (String) throws -> URL,
         fileManager: FileManager = .default
-    ) throws -> PatchRestoreInspection {
+    ) throws {
+        var journal: Journal
         do {
-            let journal = try activeJournal(for: receipt)
-            guard journal.status == .applied else {
-                return PatchRestoreInspection(changedTargets: [])
+            journal = try readJournal(receipt.journalURL)
+        } catch {
+            throw PatchPackageError.restoreFailed
+        }
+        guard journal.schemaVersion == schemaVersion,
+              journal.transactionID == receipt.id,
+              journal.projectID == receipt.projectID,
+              journal.status == .applied || journal.status == .prepared
+        else {
+            throw PatchPackageError.restoreFailed
+        }
+
+        var roots: [String: URL] = [:]
+        do {
+            for record in journal.records where roots[record.bundleID] == nil {
+                let root = PatchPathValidator.canonicalFileURL(try containerResolver(record.bundleID))
+                guard containerFingerprint(root) == record.containerFingerprint else {
+                    throw PatchPackageError.restoreFailed
+                }
+                roots[record.bundleID] = root
             }
-            let roots = try resolvedRoots(
-                journal: journal,
-                containerResolver: containerResolver
-            )
-            let resolved = try resolvedRecords(
+            try restoreRecords(
                 journal.records,
                 transactionDirectory: receipt.journalURL.deletingLastPathComponent(),
                 roots: roots,
+                requirePatchedDigest: journal.status == .applied,
+                createdDirectories: journal.createdDirectories ?? [],
                 fileManager: fileManager
             )
-            return PatchRestoreInspection(
-                changedTargets: try changedTargets(in: resolved, fileManager: fileManager)
-            )
+            journal.status = .restored
+            try writeJournal(journal, to: receipt.journalURL)
         } catch {
             throw PatchPackageError.restoreFailed
-        }
-    }
-
-    static func restore(
-        receipt: PatchTransactionReceipt,
-        allowChangedTargets: Bool = false,
-        containerResolver: (String) throws -> URL,
-        beforeWrite: ((Int) throws -> Void)? = nil,
-        fileManager: FileManager = .default
-    ) throws {
-        do {
-            var journal = try activeJournal(for: receipt)
-            let transactionDirectory = receipt.journalURL.deletingLastPathComponent()
-            let roots = try resolvedRoots(
-                journal: journal,
-                containerResolver: containerResolver
-            )
-            let resolved = try resolvedRecords(
-                journal.records,
-                transactionDirectory: transactionDirectory,
-                roots: roots,
-                allowMissingParents: journal.status == .prepared,
-                fileManager: fileManager
-            )
-            let changes = journal.status == .applied
-                ? try changedTargets(in: resolved, fileManager: fileManager)
-                : []
-            if !changes.isEmpty, !allowChangedTargets {
-                throw PatchPackageError.restoreTargetsChanged(changes.map(\.displayPath))
-            }
-            let createdDirectoryURLs = try resolvedCreatedDirectories(
-                journal.createdDirectories ?? [],
-                roots: roots,
-                fileManager: fileManager
-            )
-
-            try withCurrentStateRecovery(
-                resolved,
-                transactionDirectory: transactionDirectory,
-                fileManager: fileManager
-            ) {
-                for (index, item) in resolved.reversed().enumerated() {
-                    try beforeWrite?(index)
-                    if item.record.originalExisted {
-                        let backup = transactionDirectory.appendingPathComponent(
-                            item.record.backupFilename!
-                        )
-                        try atomicCopy(backup, to: item.target, fileManager: fileManager)
-                    } else if fileManager.fileExists(atPath: item.target.path) {
-                        try fileManager.removeItem(at: item.target)
-                    }
-                }
-                journal.status = .restored
-                try writeJournal(journal, to: receipt.journalURL)
-            }
-
-            removeEmptyCreatedDirectories(createdDirectoryURLs, fileManager: fileManager)
-        } catch let error as PatchPackageError {
-            if case .restoreTargetsChanged = error { throw error }
-            throw PatchPackageError.restoreFailed
-        } catch {
-            throw PatchPackageError.restoreFailed
-        }
-    }
-
-    static func resetToAppliedState(
-        receipt: PatchTransactionReceipt,
-        fallbackProject: PatchProject? = nil,
-        containerResolver: (String) throws -> URL,
-        beforeWrite: ((Int) throws -> Void)? = nil,
-        fileManager: FileManager = .default
-    ) throws {
-        do {
-            let journal = try activeJournal(for: receipt)
-            guard journal.status == .applied else {
-                throw PatchPackageError.resetFailed
-            }
-            let transactionDirectory = receipt.journalURL.deletingLastPathComponent()
-            let roots = try resolvedRoots(
-                journal: journal,
-                containerResolver: containerResolver
-            )
-            let resolved = try resolvedRecords(
-                journal.records,
-                transactionDirectory: transactionDirectory,
-                roots: roots,
-                fileManager: fileManager
-            )
-            let fallbackRules = Dictionary(
-                uniqueKeysWithValues: (fallbackProject?.rules ?? []).map { ($0.id, $0) }
-            )
-            let sources = try resolved.map { item -> AppliedSource in
-                if let filename = item.record.appliedFilename {
-                    let source = transactionDirectory.appendingPathComponent(filename)
-                    guard fileManager.fileExists(atPath: source.path),
-                          try digestFile(source) == item.record.replacementDigest else {
-                        throw PatchPackageError.resetFailed
-                    }
-                    return .file(source)
-                }
-                guard let rule = fallbackRules[item.record.ruleID],
-                      rule.bundleID == item.record.bundleID,
-                      rule.relativePath == item.record.relativePath,
-                      digest(rule.replacementData) == item.record.replacementDigest else {
-                    throw PatchPackageError.resetFailed
-                }
-                return .data(rule.replacementData)
-            }
-
-            try withCurrentStateRecovery(
-                resolved,
-                transactionDirectory: transactionDirectory,
-                fileManager: fileManager
-            ) {
-                for (index, item) in resolved.enumerated() {
-                    try beforeWrite?(index)
-                    switch sources[index] {
-                    case .file(let source):
-                        try atomicCopy(
-                            source,
-                            to: item.target,
-                            preservingExistingAttributes: true,
-                            fileManager: fileManager
-                        )
-                    case .data(let data):
-                        try atomicWrite(
-                            data,
-                            to: item.target,
-                            preservingExistingAttributes: true,
-                            fileManager: fileManager
-                        )
-                    }
-                    guard try digestFile(item.target) == item.record.replacementDigest else {
-                        throw PatchPackageError.resetFailed
-                    }
-                }
-            }
-        } catch {
-            throw PatchPackageError.resetFailed
         }
     }
 
@@ -504,7 +310,6 @@ enum PatchTransaction {
         return directories.compactMap { directory -> (Journal, URL)? in
             let url = directory.appendingPathComponent(journalFilename)
             guard let journal = try? readJournal(url),
-                  (minimumSchemaVersion...schemaVersion).contains(journal.schemaVersion),
                   journal.status == .applied || journal.status == .prepared else { return nil }
             return (journal, url)
         }
@@ -519,39 +324,9 @@ enum PatchTransaction {
         }
     }
 
-    static func appliedTargetKeys(
-        backupRoot: URL,
-        excludingProjectID: UUID? = nil,
-        fileManager: FileManager = .default
-    ) -> Set<String> {
-        guard let projectDirectories = try? fileManager.contentsOfDirectory(
-            at: backupRoot,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) else { return [] }
-
-        var keys = Set<String>()
-        for directory in projectDirectories {
-            guard let projectID = UUID(uuidString: directory.lastPathComponent),
-                  projectID != excludingProjectID,
-                  let receipt = latestReceipt(
-                    projectID: projectID,
-                    backupRoot: backupRoot,
-                    fileManager: fileManager
-                  ),
-                  let journal = try? readJournal(receipt.journalURL),
-                  journal.status == .applied || journal.status == .prepared
-            else { continue }
-            for record in journal.records {
-                keys.insert(record.bundleID + "\0" + record.relativePath)
-            }
-        }
-        return keys
-    }
-
     static func requiredBundleIdentifiers(for receipt: PatchTransactionReceipt) throws -> [String] {
         let journal = try readJournal(receipt.journalURL)
-        guard (minimumSchemaVersion...schemaVersion).contains(journal.schemaVersion),
+        guard journal.schemaVersion == schemaVersion,
               journal.transactionID == receipt.id,
               journal.projectID == receipt.projectID else {
             throw PatchPackageError.restoreFailed
@@ -561,203 +336,6 @@ enum PatchTransaction {
             + (journal.createdDirectories ?? []).map(\.bundleID)).compactMap { bundleID in
                 seen.insert(bundleID).inserted ? bundleID : nil
             }
-    }
-
-    private static func activeJournal(for receipt: PatchTransactionReceipt) throws -> Journal {
-        let journal = try readJournal(receipt.journalURL)
-        guard (minimumSchemaVersion...schemaVersion).contains(journal.schemaVersion),
-              journal.transactionID == receipt.id,
-              journal.projectID == receipt.projectID,
-              journal.status == .applied || journal.status == .prepared else {
-            throw PatchPackageError.restoreFailed
-        }
-        return journal
-    }
-
-    private static func resolvedRoots(
-        journal: Journal,
-        containerResolver: (String) throws -> URL
-    ) throws -> [String: URL] {
-        var roots: [String: URL] = [:]
-        let identities = journal.records.map { ($0.bundleID, $0.containerFingerprint) }
-            + (journal.createdDirectories ?? []).map { ($0.bundleID, $0.containerFingerprint) }
-        for (bundleID, expectedFingerprint) in identities {
-            if let root = roots[bundleID] {
-                guard containerFingerprint(root) == expectedFingerprint else {
-                    throw PatchPackageError.restoreFailed
-                }
-                continue
-            }
-            let root = PatchPathValidator.canonicalFileURL(try containerResolver(bundleID))
-            guard containerFingerprint(root) == expectedFingerprint else {
-                throw PatchPackageError.restoreFailed
-            }
-            roots[bundleID] = root
-        }
-        return roots
-    }
-
-    private static func resolvedRecords(
-        _ records: [Record],
-        transactionDirectory: URL,
-        roots: [String: URL],
-        allowMissingParents: Bool = false,
-        fileManager: FileManager
-    ) throws -> [ResolvedRecord] {
-        try records.map { record in
-            guard let root = roots[record.bundleID],
-                  containerFingerprint(root) == record.containerFingerprint else {
-                throw PatchPackageError.restoreFailed
-            }
-            let target = try PatchPathValidator.resolveContainedTargetURL(
-                relativePath: record.relativePath,
-                containerRoot: root
-            )
-            try validateFileTarget(
-                target,
-                relativePath: record.relativePath,
-                containerRoot: root,
-                allowMissingParents: allowMissingParents,
-                fileManager: fileManager
-            )
-            if record.originalExisted {
-                guard let backupFilename = record.backupFilename,
-                      let expectedDigest = record.originalDigest else {
-                    throw PatchPackageError.restoreFailed
-                }
-                let backup = transactionDirectory.appendingPathComponent(backupFilename)
-                guard fileManager.fileExists(atPath: backup.path),
-                      try digestFile(backup) == expectedDigest else {
-                    throw PatchPackageError.restoreFailed
-                }
-            }
-            return ResolvedRecord(record: record, target: target)
-        }
-    }
-
-    private static func changedTargets(
-        in resolved: [ResolvedRecord],
-        fileManager: FileManager
-    ) throws -> [PatchTargetChange] {
-        try resolved.compactMap { item in
-            guard fileManager.fileExists(atPath: item.target.path) else {
-                return PatchTargetChange(
-                    bundleID: item.record.bundleID,
-                    relativePath: item.record.relativePath,
-                    kind: .missing
-                )
-            }
-            guard try digestFile(item.target) != item.record.replacementDigest else {
-                return nil
-            }
-            return PatchTargetChange(
-                bundleID: item.record.bundleID,
-                relativePath: item.record.relativePath,
-                kind: .modified
-            )
-        }
-    }
-
-    private static func resolvedCreatedDirectories(
-        _ directories: [DirectoryRecord],
-        roots: [String: URL],
-        fileManager: FileManager
-    ) throws -> [URL] {
-        try directories.map { directory in
-            guard let root = roots[directory.bundleID],
-                  containerFingerprint(root) == directory.containerFingerprint else {
-                throw PatchPackageError.restoreFailed
-            }
-            let target = try PatchPathValidator.resolveContainedTargetURL(
-                relativePath: directory.relativePath,
-                containerRoot: root
-            )
-            if fileManager.fileExists(atPath: target.path) {
-                let values = try target.resourceValues(
-                    forKeys: [.isDirectoryKey, .isSymbolicLinkKey]
-                )
-                guard values.isSymbolicLink != true, values.isDirectory == true else {
-                    throw PatchPackageError.restoreFailed
-                }
-            }
-            return target
-        }
-    }
-
-    private static func withCurrentStateRecovery(
-        _ resolved: [ResolvedRecord],
-        transactionDirectory: URL,
-        fileManager: FileManager,
-        operation: () throws -> Void
-    ) throws {
-        let recoveryDirectory = transactionDirectory.appendingPathComponent(
-            ".recovery-\(UUID().uuidString)",
-            isDirectory: true
-        )
-        try fileManager.createDirectory(at: recoveryDirectory, withIntermediateDirectories: false)
-        var snapshots: [CurrentFileSnapshot] = []
-        do {
-            for (index, item) in resolved.enumerated() {
-                guard fileManager.fileExists(atPath: item.target.path) else {
-                    snapshots.append(CurrentFileSnapshot(
-                        target: item.target,
-                        existed: false,
-                        snapshotURL: nil
-                    ))
-                    continue
-                }
-                let snapshotURL = recoveryDirectory.appendingPathComponent("\(index).current")
-                try fileManager.copyItem(at: item.target, to: snapshotURL)
-                guard try digestFile(snapshotURL) == digestFile(item.target) else {
-                    throw PatchPackageError.restoreFailed
-                }
-                snapshots.append(CurrentFileSnapshot(
-                    target: item.target,
-                    existed: true,
-                    snapshotURL: snapshotURL
-                ))
-            }
-        } catch {
-            try? fileManager.removeItem(at: recoveryDirectory)
-            throw error
-        }
-
-        do {
-            try operation()
-        } catch {
-            do {
-                for snapshot in snapshots.reversed() {
-                    if snapshot.existed, let snapshotURL = snapshot.snapshotURL {
-                        try atomicCopy(snapshotURL, to: snapshot.target, fileManager: fileManager)
-                    } else if fileManager.fileExists(atPath: snapshot.target.path) {
-                        try fileManager.removeItem(at: snapshot.target)
-                    }
-                }
-                try? fileManager.removeItem(at: recoveryDirectory)
-            } catch {
-                // Keep the recovery directory when rollback cannot complete.
-                throw PatchPackageError.restoreFailed
-            }
-            throw error
-        }
-        try? fileManager.removeItem(at: recoveryDirectory)
-    }
-
-    private static func removeEmptyCreatedDirectories(
-        _ directories: [URL],
-        fileManager: FileManager
-    ) {
-        for directory in directories.reversed() {
-            guard fileManager.fileExists(atPath: directory.path),
-                  let values = try? directory.resourceValues(
-                    forKeys: [.isDirectoryKey, .isSymbolicLinkKey]
-                  ),
-                  values.isSymbolicLink != true,
-                  values.isDirectory == true,
-                  let contents = try? fileManager.contentsOfDirectory(atPath: directory.path),
-                  contents.isEmpty else { continue }
-            try? fileManager.removeItem(at: directory)
-        }
     }
 
     private static func restoreRecords(
@@ -935,26 +513,12 @@ enum PatchTransaction {
     private static func atomicCopy(
         _ source: URL,
         to target: URL,
-        preservingExistingAttributes: Bool = false,
         fileManager: FileManager
     ) throws {
         let staging = target.deletingLastPathComponent()
             .appendingPathComponent(".3105-restore-\(UUID().uuidString)")
         defer { try? fileManager.removeItem(at: staging) }
         try fileManager.copyItem(at: source, to: staging)
-        if preservingExistingAttributes,
-           let current = try? fileManager.attributesOfItem(atPath: target.path) {
-            var attributes: [FileAttributeKey: Any] = [:]
-            if let permissions = current[.posixPermissions] {
-                attributes[.posixPermissions] = permissions
-            }
-            if let protection = current[.protectionKey] {
-                attributes[.protectionKey] = protection
-            }
-            if !attributes.isEmpty {
-                try fileManager.setAttributes(attributes, ofItemAtPath: staging.path)
-            }
-        }
         let handle = try FileHandle(forWritingTo: staging)
         try handle.synchronize()
         try handle.close()

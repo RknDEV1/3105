@@ -25,40 +25,11 @@ struct FileEntry: Identifiable, Hashable {
     let path: String
     let isDirectory: Bool
     let size: Int64
-    let modifiedAt: Date?
-    let childCount: Int?
 
     var id: String { path }
     var sizeText: String {
-        guard size >= 0 else { return "—" }
+        if isDirectory { return "—" }
         return ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
-    }
-
-    init(
-        name: String,
-        path: String,
-        isDirectory: Bool,
-        size: Int64,
-        modifiedAt: Date? = nil,
-        childCount: Int? = nil
-    ) {
-        self.name = name
-        self.path = path
-        self.isDirectory = isDirectory
-        self.size = size
-        self.modifiedAt = modifiedAt
-        self.childCount = childCount
-    }
-
-    func withDirectorySummary(_ summary: FileBrowserDirectorySummary?) -> FileEntry {
-        FileEntry(
-            name: name,
-            path: path,
-            isDirectory: isDirectory,
-            size: summary?.byteCount ?? -2,
-            modifiedAt: modifiedAt,
-            childCount: summary?.childCount
-        )
     }
 }
 
@@ -722,19 +693,8 @@ enum ContainerStore {
             let full = (path as NSString).appendingPathComponent(item)
             var isDir: ObjCBool = false
             guard fm.fileExists(atPath: full, isDirectory: &isDir) else { continue }
-            let attributes = try? fm.attributesOfItem(atPath: full)
-            let size = isDir.boolValue
-                ? -1
-                : (attributes?[.size] as? NSNumber)?.int64Value ?? 0
-            entries.append(
-                FileEntry(
-                    name: item,
-                    path: full,
-                    isDirectory: isDir.boolValue,
-                    size: size,
-                    modifiedAt: attributes?[.modificationDate] as? Date
-                )
-            )
+            let size = isDir.boolValue ? 0 : ((try? fm.attributesOfItem(atPath: full)[.size] as? Int64) ?? 0)
+            entries.append(FileEntry(name: item, path: full, isDirectory: isDir.boolValue, size: size))
         }
         return entries.sorted {
             if $0.isDirectory != $1.isDirectory { return $0.isDirectory }

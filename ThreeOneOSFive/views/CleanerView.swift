@@ -123,12 +123,12 @@ struct CleanerView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                     Text(language.text("browser.search_empty"))
                         .font(.headline)
                     Text(language.text("cleaner.search_empty_message"))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                 }
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
@@ -155,7 +155,7 @@ struct CleanerView: View {
                 }
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(AppTheme.secondaryText)
             .textCase(nil)
         } footer: {
             if !records.isEmpty {
@@ -171,11 +171,11 @@ struct CleanerView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(record.app.displayName)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                 Text(record.app.bundleID)
                     .font(.caption2.monospaced())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.secondaryText)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -184,11 +184,11 @@ struct CleanerView: View {
 
             Text(sizeText(record.usage.totalBytes))
                 .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
 
             Image(systemName: selectedBundleIDs.contains(record.id) ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: AppTheme.selectionIconSize, weight: .medium))
-                .foregroundStyle(selectedBundleIDs.contains(record.id) ? AppTheme.accent : Color.secondary)
+                .foregroundStyle(selectedBundleIDs.contains(record.id) ? AppTheme.accent : AppTheme.secondaryText)
                 .accessibilityHidden(true)
         }
         .contentShape(Rectangle())
@@ -316,16 +316,16 @@ struct CleanerView: View {
                         .font(.headline)
                     Text(language.text("cleaner.scanned_count", Int64(scannedAppCount)))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                 } else {
                     Image(systemName: "checkmark.circle")
                         .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                     Text(language.text("cleaner.empty_title"))
                         .font(.headline)
                     Text(language.text("cleaner.empty_message"))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.secondaryText)
                     Button(language.text("cleaner.scan_again")) { reload() }
                         .buttonStyle(.bordered)
                         .controlSize(.large)

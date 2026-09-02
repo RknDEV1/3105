@@ -24,12 +24,12 @@ struct LogView: View {
                     VStack(spacing: 14) {
                         Image(systemName: "apple.terminal")
                             .font(.system(size: AppTheme.emptyIconSize, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.secondaryText)
                         Text(language.text("logs.empty_title"))
                             .font(.title3.bold())
                         Text(language.text("logs.empty_message"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.secondaryText)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -43,7 +43,7 @@ struct LogView: View {
                                     VStack(spacing: 0) {
                                         Text(entry)
                                             .font(.system(.caption, design: .monospaced))
-                                            .foregroundStyle(.primary)
+                                            .foregroundStyle(AppTheme.primaryText)
                                             .textSelection(.enabled)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.vertical, 11)

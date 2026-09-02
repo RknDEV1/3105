@@ -14,17 +14,9 @@ struct AppDataBrowserView: View {
     @State private var hasLoaded = false
     @State private var workspaceURL: URL?
     @Binding private var tabSession: FilesTabSession
-    let onOpenSettings: () -> Void
-    let onOpenLogs: () -> Void
 
-    init(
-        tabSession: Binding<FilesTabSession>,
-        onOpenSettings: @escaping () -> Void = {},
-        onOpenLogs: @escaping () -> Void = {}
-    ) {
+    init(tabSession: Binding<FilesTabSession>) {
         _tabSession = tabSession
-        self.onOpenSettings = onOpenSettings
-        self.onOpenLogs = onOpenLogs
     }
 
     private var filteredApps: [InstalledApp] {
@@ -47,12 +39,7 @@ struct AppDataBrowserView: View {
     }
 
     var body: some View {
-        navigationContent(tabID: tabSession.selectedTabID)
-            .id(tabSession.selectedTabID)
-    }
-
-    private func navigationContent(tabID: UUID) -> some View {
-        NavigationStack(path: navigationPath(for: tabID)) {
+        NavigationStack(path: activeNavigationPath) {
             appList
             .navigationTitle(language.text("browser.title"))
             .navigationBarTitleDisplayMode(.inline)
@@ -71,11 +58,6 @@ struct AppDataBrowserView: View {
                     .disabled(isResolving)
                     .accessibilityLabel(language.text("browser.retry"))
                 }
-                AppUtilityToolbar(
-                    language: language,
-                    onOpenSettings: onOpenSettings,
-                    onOpenLogs: onOpenLogs
-                )
             }
             .onAppear {
                 if workspaceURL == nil {
@@ -108,10 +90,10 @@ struct AppDataBrowserView: View {
         }
     }
 
-    private func navigationPath(for tabID: UUID) -> Binding<[FileBrowserDestination]> {
+    private var activeNavigationPath: Binding<[FileBrowserDestination]> {
         Binding(
-            get: { tabSession.navigationPath(for: tabID) },
-            set: { tabSession.setNavigationPath($0, for: tabID) }
+            get: { tabSession.activeTab?.navigationPath ?? [] },
+            set: { tabSession.setActiveNavigationPath($0) }
         )
     }
 
@@ -148,7 +130,7 @@ struct AppDataBrowserView: View {
                                     .font(.subheadline.weight(.semibold))
                                 Text(language.text("browser.workspace_subtitle"))
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(AppTheme.secondaryText)
                             }
                         }
                         .padding(.vertical, 2)
@@ -188,7 +170,7 @@ struct AppDataBrowserView: View {
                     }
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
                 .textCase(nil)
             }
         }
@@ -224,7 +206,7 @@ struct AppDataBrowserView: View {
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                 Text(app.bundleID)
                     .font(.caption2.monospaced())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.secondaryText)
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -234,7 +216,7 @@ struct AppDataBrowserView: View {
             if !app.version.isEmpty {
                 Text(app.version)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.secondaryText)
             }
         }
         .padding(.vertical, 2)
@@ -253,10 +235,10 @@ struct AppDataBrowserView: View {
         VStack(spacing: 16) {
             Image(systemName: "folder.badge.questionmark")
                 .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
             Text(errorMessage ?? language.text("browser.empty"))
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding()
             Button(language.text("browser.retry")) { reload() }
@@ -269,12 +251,12 @@ struct AppDataBrowserView: View {
         VStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
             Text(language.text("browser.search_empty"))
                 .font(.subheadline.weight(.medium))
             Text(language.text("browser.search_apps_empty_message"))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -419,7 +401,7 @@ struct BrowserAppIcon: View {
             } else {
                 Image(systemName: "app")
                     .font(.system(size: AppTheme.rowIconSize, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.secondaryText)
             }
         }
         .frame(width: AppTheme.appIconSize, height: AppTheme.appIconSize)

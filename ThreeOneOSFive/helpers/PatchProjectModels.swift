@@ -47,8 +47,6 @@ struct PatchDirectory: Codable, Identifiable, Hashable {
 struct PatchProject: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
-    var author: String
-    var isPrivate: Bool
     var createdAt: Date
     var updatedAt: Date
     var bundleIdentifiers: [String]
@@ -58,8 +56,6 @@ struct PatchProject: Codable, Identifiable, Hashable {
     init(
         id: UUID = UUID(),
         name: String,
-        author: String = "",
-        isPrivate: Bool = false,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         bundleIdentifiers: [String] = [],
@@ -68,8 +64,6 @@ struct PatchProject: Codable, Identifiable, Hashable {
     ) {
         self.id = id
         self.name = name
-        self.author = author
-        self.isPrivate = isPrivate
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.bundleIdentifiers = bundleIdentifiers
@@ -86,8 +80,6 @@ struct PatchProject: Codable, Identifiable, Hashable {
     private enum CodingKeys: String, CodingKey {
         case id
         case name
-        case author
-        case isPrivate
         case createdAt
         case updatedAt
         case bundleIdentifiers
@@ -99,8 +91,6 @@ struct PatchProject: Codable, Identifiable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
-        author = try container.decodeIfPresent(String.self, forKey: .author) ?? ""
-        isPrivate = try container.decodeIfPresent(Bool.self, forKey: .isPrivate) ?? false
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         bundleIdentifiers = try container.decodeIfPresent(
@@ -118,29 +108,11 @@ struct PatchProject: Codable, Identifiable, Hashable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
-        try container.encode(author, forKey: .author)
-        try container.encode(isPrivate, forKey: .isPrivate)
         try container.encode(createdAt, forKey: .createdAt)
         try container.encode(updatedAt, forKey: .updatedAt)
         try container.encode(bundleIdentifiers, forKey: .bundleIdentifiers)
         try container.encode(directories, forKey: .directories)
         try container.encode(rules, forKey: .rules)
-    }
-}
-
-enum PatchProjectAccessPolicy {
-    static func canInspectContents(
-        project: PatchProject,
-        isAuthorCopy: Bool
-    ) -> Bool {
-        !project.isPrivate || isAuthorCopy
-    }
-
-    static func shouldMaterializeWorkspace(
-        project: PatchProject,
-        isAuthorCopy: Bool
-    ) -> Bool {
-        canInspectContents(project: project, isAuthorCopy: isAuthorCopy)
     }
 }
 
@@ -150,12 +122,6 @@ struct PatchPackageSummary: Equatable, Identifiable {
     let schemaVersion: Int
     let isPasswordProtected: Bool
     let keyFingerprint: Data
-}
-
-struct PatchPackageOrigin: Codable, Equatable, Hashable {
-    let repositoryName: String
-    let repositoryURL: URL
-    let packageIdentifier: String
 }
 
 struct EncodedPatchPackage {
@@ -180,15 +146,8 @@ enum PatchPackageError: Error, Equatable {
     case keychainFailed
     case targetAppUnavailable(String)
     case symbolicLinkUnsupported
-    case targetOccupied(String)
-    case projectAlreadyApplied
-    case restoreTargetsChanged([String])
-    case activePatchCannotBeDeleted
-    case privatePatchRequiresPassword
-    case privateOperationFailed
     case applyFailed
     case restoreFailed
-    case resetFailed
     case invalidImportLink
     case remoteImportFailed
 }
@@ -206,16 +165,9 @@ extension PatchPackageError: LocalizedError {
         case .invalidProject: return "patch.error.invalid_project"
         case .keychainFailed: return "patch.error.keychain"
         case .targetAppUnavailable: return "patch.error.app_unavailable"
-        case .targetOccupied: return "patch.error.target_occupied"
-        case .projectAlreadyApplied: return "patch.error.already_applied"
-        case .restoreTargetsChanged: return "patch.error.restore_targets_changed"
-        case .activePatchCannotBeDeleted: return "patch.error.active_delete"
         case .symbolicLinkUnsupported: return "patch.error.symlink"
-        case .privatePatchRequiresPassword: return "patch.error.private_password"
-        case .privateOperationFailed: return "patch.error.private_operation"
         case .applyFailed: return "patch.error.apply"
         case .restoreFailed: return "patch.error.restore"
-        case .resetFailed: return "patch.error.reset"
         case .invalidImportLink: return "patch.error.invalid_import_link"
         case .remoteImportFailed: return "patch.error.remote_import"
         }
@@ -230,20 +182,15 @@ extension PatchPackageError: LocalizedError {
     }
 
     var localizationArgument: String? {
-        switch self {
-        case .targetAppUnavailable(let bundleID), .targetOccupied(let bundleID):
+        if case .targetAppUnavailable(let bundleID) = self {
             return bundleID
-        case .restoreTargetsChanged(let paths):
-            return paths.joined(separator: "\n")
-        default:
-            return nil
         }
+        return nil
     }
 }
 
 enum PatchPackageLimits {
     static let maximumPathBytes = 4_096
-    static let maximumAuthorBytes = 160
     static let maximumPasswordBytes = 1_024
     static let minimumKDFIterations = 100_000
     static let defaultKDFIterations = 250_000

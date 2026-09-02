@@ -6,14 +6,11 @@ struct ThreeOneOSFiveApp: App {
     @StateObject private var appState = AppState()
     @StateObject private var patchDraftCoordinator = PatchDraftCoordinator()
     @StateObject private var fileOperationCoordinator = FileOperationCoordinator()
-    @StateObject private var patchStore = PatchProjectStore()
-    @StateObject private var repositoryStore = PackageRepositoryStore()
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
     @State private var showOnboarding = OnboardingStore.shouldShow()
     @State private var showAttribution = false
     @State private var updateOffer: AppUpdateChecker.Offer?
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init() {
         setupLogCapture()
@@ -38,8 +35,6 @@ struct ThreeOneOSFiveApp: App {
                     .environmentObject(appState)
                     .environmentObject(patchDraftCoordinator)
                     .environmentObject(fileOperationCoordinator)
-                    .environmentObject(patchStore)
-                    .environmentObject(repositoryStore)
                     .environment(\.appLanguage, language)
                     .environment(\.locale, language.locale)
                     .opacity(showOnboarding ? 0 : 1)
@@ -48,7 +43,7 @@ struct ThreeOneOSFiveApp: App {
                 if showOnboarding {
                     OnboardingView {
                         OnboardingStore.markCompleted()
-                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
+                        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                             showOnboarding = false
                         }
                         appState.detectSupport()
@@ -56,11 +51,7 @@ struct ThreeOneOSFiveApp: App {
                     }
                     .environment(\.appLanguage, language)
                     .environment(\.locale, language.locale)
-                    .transition(
-                        reduceMotion
-                            ? .opacity
-                            : .opacity.combined(with: .scale(scale: 0.98))
-                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
                     .zIndex(1)
                 }
             }

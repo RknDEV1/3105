@@ -25,12 +25,12 @@ struct FolderPatchSelectionView: View {
                     VStack(spacing: 10) {
                         Image(systemName: "folder")
                             .font(.system(size: AppTheme.emptyIconSize, weight: .light))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.secondaryText)
                         Text(language.text("patch.folder_empty"))
                             .font(.headline)
                         Text(language.text("patch.folder_empty_message"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.secondaryText)
                             .multilineTextAlignment(.center)
                     }
                     .padding()
@@ -85,11 +85,11 @@ struct FolderPatchSelectionView: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(candidate.url.lastPathComponent)
                                     .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(AppTheme.primaryText)
                                     .lineLimit(1)
                                 Text(candidate.relativePath)
                                     .font(.caption2.monospaced())
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(AppTheme.secondaryText)
                                     .lineLimit(2)
                             }
                             Spacer(minLength: 8)
@@ -99,13 +99,13 @@ struct FolderPatchSelectionView: View {
                                       : "circle")
                                     .foregroundStyle(selectedIDs.contains(candidate.id)
                                                      ? AppTheme.accent
-                                                     : Color.secondary)
+                                                     : AppTheme.secondaryText)
                                 Text(ByteCountFormatter.string(
                                     fromByteCount: candidate.byteCount,
                                     countStyle: .file
                                 ))
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(AppTheme.secondaryText)
                             }
                         }
                         .contentShape(Rectangle())

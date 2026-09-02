@@ -4,7 +4,6 @@ import Darwin
 struct WallpaperAccessReport: Equatable {
     let layout: WallpaperPosterLayout
     let descriptorCount: Int
-    let customDescriptorCount: Int
     let canInstall: Bool
     let deniedExtensionIdentifiers: [String]
 }
@@ -22,24 +21,9 @@ enum WallpaperAccessProbe {
             fileManager: fileManager
         )
         var descriptorCount = 0
-        var customDescriptorCount = 0
         for descriptorDirectory in layout.extensionDescriptorDirectories.values {
-            let children = (try? fileManager.contentsOfDirectory(
-                at: descriptorDirectory,
-                includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey]
-            )) ?? []
-            for child in children {
-                let name = child.lastPathComponent
-                if name.hasPrefix(".") && !name.hasPrefix(".3105-wallpaper-") { continue }
-                let values = try? child.resourceValues(
-                    forKeys: [.isDirectoryKey, .isSymbolicLinkKey]
-                )
-                guard values?.isDirectory == true, values?.isSymbolicLink != true else { continue }
-                descriptorCount += 1
-                if WallpaperDescriptorIdentity.isCustom(at: child, fileManager: fileManager) {
-                    customDescriptorCount += 1
-                }
-            }
+            let names = (try? fileManager.contentsOfDirectory(atPath: descriptorDirectory.path)) ?? []
+            descriptorCount += names.filter { !$0.hasPrefix(".") }.count
         }
 
         let requiredIdentifiers: [String]
@@ -82,7 +66,6 @@ enum WallpaperAccessProbe {
         return WallpaperAccessReport(
             layout: layout,
             descriptorCount: descriptorCount,
-            customDescriptorCount: customDescriptorCount,
             canInstall: !requiredIdentifiers.isEmpty
                 && deniedIdentifiers.isEmpty,
             deniedExtensionIdentifiers: deniedIdentifiers
@@ -90,99 +73,9 @@ enum WallpaperAccessProbe {
     }
 }
 
-enum WallpaperDeviceAccessService {
-    static func report(
-        requiredExtensionIdentifiers: Set<String>? = nil
-    ) throws -> WallpaperAccessReport {
-#if targetEnvironment(simulator)
-        if ProcessInfo.processInfo.arguments.contains("--simulate-wallpaper-data") {
-            let root = FileManager.default.temporaryDirectory.appendingPathComponent(
-                "3105-Simulated-PosterBoard",
-                isDirectory: true
-            )
-            let descriptors = root.appendingPathComponent(
-                "Library/Application Support/PRBPosterExtensionDataStore/72/Extensions/" +
-                    "com.apple.WallpaperKit.CollectionsPoster/descriptors",
-                isDirectory: true
-            )
-            try FileManager.default.createDirectory(
-                at: descriptors,
-                withIntermediateDirectories: true
-            )
-            return try WallpaperAccessProbe.probe(
-                containerURL: root,
-                rootValidator: { $0.standardizedFileURL == root.standardizedFileURL },
-                requiredExtensionIdentifiers: requiredExtensionIdentifiers
-            )
-        }
-#endif
-        guard let path = ContainerStore.resolveAppContainerPath(
-            bundleID: "com.apple.PosterBoard"
-        ) else {
-            throw WallpaperLabError.accessDenied
-        }
-        return try WallpaperAccessProbe.probe(
-            containerURL: URL(fileURLWithPath: path, isDirectory: true),
-            rootValidator: { ContainerStore.isApplicationContainerPath($0.path) },
-            requiredExtensionIdentifiers: requiredExtensionIdentifiers
-        )
-    }
-
-    static func install(
-        _ package: WallpaperStagedPackage
-    ) throws -> (WallpaperInstallReceipt, WallpaperAccessReport) {
-        let requiredExtensions = Set(
-            package.payload.descriptors.map(\.extensionIdentifier)
-        )
-        let currentReport = try report(
-            requiredExtensionIdentifiers: requiredExtensions
-        )
-        guard currentReport.canInstall else {
-            throw WallpaperLabError.accessDenied
-        }
-        let backupRoot = try WallpaperPackageStore.backupRoot()
-        let receipt = try WallpaperInstaller.install(
-            payload: package.payload,
-            layout: currentReport.layout,
-            backupRoot: backupRoot
-        )
-        do {
-            try WallpaperPackageStore.delete(package)
-        } catch {
-            log("wallpaper: staged package leftover after apply")
-        }
-        return (
-            receipt,
-            try report(requiredExtensionIdentifiers: requiredExtensions)
-        )
-    }
-
-    static func resetCustomCollections() throws -> (Int, WallpaperAccessReport) {
-        let currentReport = try report()
-        guard currentReport.canInstall else {
-            throw WallpaperLabError.accessDenied
-        }
-        guard let path = ContainerStore.resolveAppContainerPath(
-            bundleID: "com.apple.PosterBoard"
-        ) else {
-            throw WallpaperLabError.accessDenied
-        }
-        let containerURL = URL(fileURLWithPath: path, isDirectory: true)
-        let backupRoot = try WallpaperPackageStore.backupRoot()
-        let removed = try WallpaperInstaller.resetCustomDescriptors(
-            layout: currentReport.layout,
-            containerURL: containerURL,
-            rootValidator: { ContainerStore.isApplicationContainerPath($0.path) },
-            backupRoot: backupRoot
-        )
-        return (removed, try report())
-    }
-}
-
 struct WallpaperStagedPackage: Identifiable, Equatable {
     let id: UUID
     let displayName: String
-    let repositoryIdentity: String?
     let packageDirectoryURL: URL
     let archiveURL: URL
     let extractedURL: URL
@@ -211,8 +104,6 @@ enum WallpaperPackageStore {
 
     static func importPackage(
         from sourceURL: URL,
-        displayName: String? = nil,
-        repositoryIdentity: String? = nil,
         fileManager: FileManager = .default
     ) throws -> WallpaperStagedPackage {
         guard sourceURL.pathExtension.lowercased() == "tendies" else {
@@ -232,15 +123,6 @@ enum WallpaperPackageStore {
         let size = Int64(values.fileSize ?? 0)
         guard size > 0, size <= WallpaperLabLimits.maximumArchiveBytes else {
             throw WallpaperLabError.packageTooLarge
-        }
-        let resolvedDisplayName = (
-            displayName ?? sourceURL.deletingPathExtension().lastPathComponent
-        ).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard isValidMetadataText(resolvedDisplayName, maximumBytes: 255),
-              repositoryIdentity.map({
-                  isValidMetadataText($0, maximumBytes: 4_096)
-              }) ?? true else {
-            throw WallpaperLabError.unsupportedPackage
         }
 
         let root = try stagingRoot(fileManager: fileManager)
@@ -272,8 +154,7 @@ enum WallpaperPackageStore {
             )
             let metadata = PackageMetadata(
                 id: id,
-                displayName: resolvedDisplayName,
-                repositoryIdentity: repositoryIdentity,
+                displayName: sourceURL.deletingPathExtension().lastPathComponent,
                 importedAt: Date()
             )
             let encoder = PropertyListEncoder()
@@ -285,18 +166,7 @@ enum WallpaperPackageStore {
             guard rename(importingURL.path, finalURL.path) == 0 else {
                 throw WallpaperLabError.unsafeArchive
             }
-            let importedPackage = try loadPackage(
-                at: finalURL,
-                fileManager: fileManager
-            )
-            if let repositoryIdentity {
-                for existingPackage in packages(fileManager: fileManager)
-                where existingPackage.id != importedPackage.id
-                    && existingPackage.repositoryIdentity == repositoryIdentity {
-                    try? delete(existingPackage, fileManager: fileManager)
-                }
-            }
-            return importedPackage
+            return try loadPackage(at: finalURL, fileManager: fileManager)
         } catch let error as WallpaperLabError {
             try? fileManager.removeItem(at: importingURL)
             throw error
@@ -317,15 +187,6 @@ enum WallpaperPackageStore {
             guard UUID(uuidString: directory.lastPathComponent) != nil else { return nil }
             return try? loadPackage(at: directory, fileManager: fileManager)
         }.sorted { $0.importedAt > $1.importedAt }
-    }
-
-    static func contains(
-        repositoryIdentity: String,
-        fileManager: FileManager = .default
-    ) -> Bool {
-        packages(fileManager: fileManager).contains {
-            $0.repositoryIdentity == repositoryIdentity
-        }
     }
 
     static func delete(
@@ -366,7 +227,6 @@ enum WallpaperPackageStore {
         return WallpaperStagedPackage(
             id: metadata.id,
             displayName: metadata.displayName,
-            repositoryIdentity: metadata.repositoryIdentity,
             packageDirectoryURL: directory,
             archiveURL: archiveURL,
             extractedURL: extractedURL,
@@ -396,22 +256,10 @@ enum WallpaperPackageStore {
             try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
         }
     }
-
-    private static func isValidMetadataText(
-        _ value: String,
-        maximumBytes: Int
-    ) -> Bool {
-        !value.isEmpty
-            && value.utf8.count <= maximumBytes
-            && !value.unicodeScalars.contains(
-                where: CharacterSet.controlCharacters.contains
-            )
-    }
 }
 
 private struct PackageMetadata: Codable {
     let id: UUID
     let displayName: String
-    let repositoryIdentity: String?
     let importedAt: Date
 }
