@@ -105,6 +105,10 @@ struct ThreeOneOSFiveApp: App {
 private struct FreeFireSelectionView: View {
     let onContinue: () -> Void
 
+    private var artworkSide: CGFloat {
+        min(132, max(108, UIScreen.main.bounds.width * 0.30))
+    }
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -115,67 +119,99 @@ private struct FreeFireSelectionView: View {
                 .blur(radius: 80)
                 .offset(x: 120, y: -230)
 
-            VStack(spacing: 22) {
-                Spacer(minLength: 30)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 18) {
+                    Spacer(minLength: 22)
 
                 VStack(spacing: 5) {
                     Text("CHZ")
-                        .font(.system(size: 38, weight: .black))
+                        .font(.system(size: 32, weight: .black))
                         .italic()
                         .foregroundStyle(Color.red)
                     Text("PRIV")
-                        .font(.system(size: 34, weight: .black))
+                        .font(.system(size: 29, weight: .black))
                         .italic()
                         .foregroundStyle(.white)
                 }
 
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     Image("FreeFire")
                         .resizable()
-                        .scaledToFill()
-                        .frame(width: 210, height: 210)
-                        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                        .scaledToFit()
+                        .frame(width: artworkSide, height: artworkSide)
+                        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                            RoundedRectangle(cornerRadius: 26, style: .continuous)
                                 .stroke(Color.white.opacity(0.25), lineWidth: 1)
                         }
-                        .shadow(color: .red.opacity(0.28), radius: 24, y: 10)
+                        .shadow(color: .red.opacity(0.24), radius: 16, y: 7)
 
                     Text("Free Fire")
-                        .font(.system(size: 25, weight: .heavy))
+                        .font(.system(size: 21, weight: .heavy))
                         .foregroundStyle(.white)
 
                     Text("Selecione um jogo para continuar")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.white.opacity(0.62))
                 }
-                .padding(.vertical, 22)
+                .padding(.vertical, 14)
                 .frame(maxWidth: .infinity)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .background(.ultraThinMaterial.opacity(0.82), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
                 }
 
                 Button(action: onContinue) {
                     HStack(spacing: 8) {
                         Text("Acessar Free Fire")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 15, weight: .bold))
                         Image(systemName: "arrow.right")
                             .font(.system(size: 14, weight: .bold))
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(Color.red, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                    .frame(height: 49)
+                    .background(Color.red.opacity(0.90), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .shadow(color: .red.opacity(0.28), radius: 14, y: 7)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Acessar Free Fire")
+                    .accessibilityLabel("Acessar Free Fire")
 
-                Spacer(minLength: 30)
+                    VStack(spacing: 12) {
+                        Image("FreeFireMax")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: artworkSide, height: artworkSide)
+                            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                            }
+                            .opacity(0.72)
+
+                        Text("Free Fire Max")
+                            .font(.system(size: 20, weight: .heavy))
+                            .foregroundStyle(.white)
+
+                        Text("Suporte em breve")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.white.opacity(0.58))
+                    }
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity)
+                    .background(.ultraThinMaterial.opacity(0.64), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Free Fire Max, suporte em breve")
+
+                    Spacer(minLength: 22)
+                }
+                .padding(.horizontal, 22)
             }
-            .padding(.horizontal, 22)
         }
     }
 }

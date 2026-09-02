@@ -40,6 +40,7 @@ struct ContentView: View {
         }
         .appTheme()
         .imageScale(.small)
+        .dynamicTypeSize(.small)
         .onChange(of: patchDraftCoordinator.request?.id) { requestID in
             if requestID != nil { tabNavigation.select(AppSection.patches.rawValue) }
         }
@@ -300,7 +301,7 @@ private struct DashboardView: View {
 
 private struct CHZPrivHomeView: View {
     private enum GameTab: String, CaseIterable, Identifiable {
-        case freeFire = "Free Fire"
+        case freeFire = "Aimbot"
         case hologramas = "Hologramas"
         var id: String { rawValue }
     }
@@ -419,7 +420,7 @@ private struct CHZPrivHomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Funções")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(.white)
                 Spacer()
                 Text("\(visiblePatches.count) patches")
@@ -494,10 +495,7 @@ private struct CHZPrivHomeView: View {
         freeFirePatches.filter { item in
             let title = (item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent)
                 .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            let belongsToHologramas = title.contains("holograma")
-                || title.contains("holo")
-                || title.contains("antena")
-                || title.contains("hs peito")
+            let belongsToHologramas = title.contains("hs peito")
             return selectedGame == .hologramas ? belongsToHologramas : !belongsToHologramas
         }
     }
@@ -601,7 +599,7 @@ private struct CHZPrivHomeView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Log de atividade")
-                        .font(.system(size: 16, weight: .heavy))
+                        .font(.system(size: 15, weight: .heavy))
                         .foregroundStyle(.white)
                     Text("Sessão atual · \(enabledPatchIDs.count) ativo(s)")
                         .font(.system(size: 11, weight: .medium))
@@ -671,7 +669,7 @@ private struct CHZPrivHomeView: View {
     private var backupStatus: some View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.shield")
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(AppTheme.accent)
             Text("Backup original protegido")
                 .font(.system(size: 16, weight: .medium))

@@ -69,7 +69,6 @@
 		3105A228 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3105A120; };
 		3105A211 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3105A031; };
 		3105L201 /* BALA MÁGICA COM ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L101; };
-		3105L202 /* Chams + Holo tím.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L102; };
 		3105L203 /* HS 100- BAYPSS-CACHE.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L103; };
 		3105L204 /* HS ALTO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L104; };
 		3105L205 /* HS ALTO - PESCOÇO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L105; };
@@ -80,12 +79,10 @@
 		3105L210 /* HS PEITO LITE - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L110; };
 		3105L211 /* HS PEITO LITE.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L111; };
 		3105L212 /* HS PESCOÇO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L112; };
-		3105L213 /* Unlock FPS 144.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L113; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		3105L101 /* BALA MÁGICA COM ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/BALA MÁGICA COM ANTENA.3105"; sourceTree = "<group>"; };
-		3105L102 /* Chams + Holo tím.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Chams + Holo tím.3105"; sourceTree = "<group>"; };
 		3105L103 /* HS 100- BAYPSS-CACHE.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS 100- BAYPSS-CACHE.3105"; sourceTree = "<group>"; };
 		3105L104 /* HS ALTO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO - ANTENA.3105"; sourceTree = "<group>"; };
 		3105L105 /* HS ALTO - PESCOÇO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO - PESCOÇO.3105"; sourceTree = "<group>"; };
@@ -96,7 +93,6 @@
 		3105L110 /* HS PEITO LITE - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO LITE - ANTENA.3105"; sourceTree = "<group>"; };
 		3105L111 /* HS PEITO LITE.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO LITE.3105"; sourceTree = "<group>"; };
 		3105L112 /* HS PESCOÇO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PESCOÇO - ANTENA.3105"; sourceTree = "<group>"; };
-		3105L113 /* Unlock FPS 144.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Unlock FPS 144.3105"; sourceTree = "<group>"; };
 		3105A010 /* 3105.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3105.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3105A020 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		3105A021 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -378,7 +374,6 @@
                     3105A211,
                     3105A228,
 					3105L201,
-					3105L202,
 					3105L203,
 					3105L204,
 					3105L205,
@@ -389,7 +384,6 @@
 					3105L210,
 					3105L211,
 					3105L212,
-					3105L213,
                 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
