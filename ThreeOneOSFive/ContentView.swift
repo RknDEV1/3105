@@ -10,7 +10,8 @@ struct ContentView: View {
     @AppStorage(FeatureVisibility.cleanerStorageKey) private var cleanerEnabled = true
     @AppStorage(FeatureVisibility.wallpapersStorageKey) private var wallpapersEnabled = true
 
-    init() {
+    init(isFreeFireMax: Bool = false) {
+        self.isFreeFireMax = isFreeFireMax
 #if targetEnvironment(simulator)
         let arguments = ProcessInfo.processInfo.arguments
         let initialTab: Int
