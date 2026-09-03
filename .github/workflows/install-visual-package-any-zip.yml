@@ -75,7 +75,30 @@ jobs:
           done
 
           test -f "$GITHUB_WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
-          test -f "$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches/manifest.json"
+
+          PATCH_DIR="$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches"
+          mapfile -t PATCH_FILES < <(
+            find "$PATCH_DIR" -maxdepth 1 -type f -name '*.3105' -printf '%f\n' | sort
+          )
+          test "${#PATCH_FILES[@]}" -gt 0
+
+          # O manifesto antigo listava P01.bin–P13.bin, que não existem
+          # neste pacote. Gere um inventário determinístico dos .3105 reais.
+          {
+            echo '['
+            last_index=$((${#PATCH_FILES[@]} - 1))
+            for index in "${!PATCH_FILES[@]}"; do
+              filename="${PATCH_FILES[$index]}"
+              digest="$(sha256sum "$PATCH_DIR/$filename" | awk '{print $1}')"
+              comma=','
+              if [ "$index" -eq "$last_index" ]; then comma=''; fi
+              printf '  {"id": %d, "file": "%s", "sha256": "%s"}%s\n' \\
+                "$((index + 1))" "$filename" "$digest" "$comma"
+            done
+            echo ']'
+          } > "$PATCH_DIR/manifest.json"
+
+          test "$(grep -c '"sha256"' "$PATCH_DIR/manifest.json")" -eq "${#PATCH_FILES[@]}"
 
           # Falhar antes do commit se algum workflow tiver sido alterado.
           if ! git diff --quiet -- .github; then
