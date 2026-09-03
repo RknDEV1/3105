@@ -63,9 +63,26 @@ jobs:
           set -euo pipefail
 
           test -f "$SOURCE_ROOT/ThreeOneOSFive.xcodeproj/project.pbxproj"
-          cp -R "$SOURCE_ROOT"/. "$GITHUB_WORKSPACE"/
+          # O pacote contém uma cópia própria de .github. Ela não deve
+          # sobrescrever os workflows do repositório.
+          shopt -s dotglob nullglob
+          for item in "$SOURCE_ROOT"/*; do
+            name="$(basename "$item")"
+            if [ "$name" = ".github" ]; then
+              continue
+            fi
+            cp -R "$item" "$GITHUB_WORKSPACE/"
+          done
+
           test -f "$GITHUB_WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
           test -f "$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches/manifest.json"
+
+          # Falhar antes do commit se algum workflow tiver sido alterado.
+          if ! git diff --quiet -- .github; then
+            echo "O pacote tentou alterar .github; abortando por segurança." >&2
+            git diff -- .github >&2
+            exit 1
+          fi
 
       - name: Commit installed project
         shell: bash
