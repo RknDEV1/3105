@@ -395,13 +395,17 @@ private struct CHZPrivHomeView: View {
     private var logo: some View {
         VStack(spacing: -2) {
                 Text("CHZ")
-                    .font(.custom("Burbank Big Condensed", size: 31))
+                    .font(.custom("BurbankBigCondensed-Black", size: 34))
                 .italic()
                 .foregroundStyle(AppTheme.accent)
+                .shadow(color: AppTheme.accent.opacity(0.88), radius: 1.15)
+                .shadow(color: AppTheme.accent.opacity(0.42), radius: 0.35)
             Text("PRIV")
-                .font(.custom("Burbank Big Condensed", size: 29))
+                .font(.custom("BurbankBigCondensed-Black", size: 32))
                 .italic()
                 .foregroundStyle(.white)
+                .shadow(color: .white.opacity(0.68), radius: 1.05)
+                .shadow(color: .white.opacity(0.28), radius: 0.35)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 6)

@@ -10,7 +10,7 @@
     <string>$(EXECUTABLE_NAME)</string>
     <key>UIAppFonts</key>
     <array>
-        <string>Fonts/BurbankBigCondensed-Regular.otf</string>
+        <string>Fonts/Fortnite.otf</string>
     </array>
     <key>CFBundleIdentifier</key>
     <string>com.apple.mobile.MobileHouseArrest</string>

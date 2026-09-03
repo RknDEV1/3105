@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3105L401 /* BurbankBigCondensed-Regular.otf in Resources */ = {isa = PBXBuildFile; fileRef = 3105L400; };
+		3105L401 /* Fortnite.otf in Resources */ = {isa = PBXBuildFile; fileRef = 3105L400; };
 		3105A200 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A020; };
 		3105A201 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A021; };
 		3105A203 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A023; };
@@ -83,7 +83,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3105L400 /* BurbankBigCondensed-Regular.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/BurbankBigCondensed-Regular.otf"; sourceTree = "<group>"; };
+		3105L400 /* Fortnite.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Fortnite.otf"; sourceTree = "<group>"; };
 		3105L101 /* BALA MÁGICA COM ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/BALA MÁGICA COM ANTENA.3105"; sourceTree = "<group>"; };
 		3105L103 /* HS 100- BAYPSS-CACHE.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS 100- BAYPSS-CACHE.3105"; sourceTree = "<group>"; };
 		3105L104 /* HS ALTO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO - ANTENA.3105"; sourceTree = "<group>"; };
@@ -208,7 +208,7 @@
 				3105A406 /* kexploit */,
 				3105A120 /* Localizable.strings */,
                     3105A031 /* Assets.xcassets */,
-                    3105L400 /* BurbankBigCondensed-Regular.otf */,
+                    3105L400 /* Fortnite.otf */,
                 );
 			path = ThreeOneOSFive;
 			sourceTree = "<group>";

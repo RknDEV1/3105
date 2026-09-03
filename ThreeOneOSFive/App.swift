@@ -140,15 +140,17 @@ private struct FreeFireSelectionView: View {
 
                 VStack(spacing: 5) {
                     Text("CHZ")
-                        .font(.custom("Burbank Big Condensed", size: 31))
+                        .font(.custom("BurbankBigCondensed-Black", size: 34))
                         .italic()
                         .foregroundStyle(AppTheme.accent)
-                        .shadow(color: AppTheme.accent.opacity(0.72), radius: 0.7)
+                        .shadow(color: AppTheme.accent.opacity(0.88), radius: 1.15)
+                        .shadow(color: AppTheme.accent.opacity(0.42), radius: 0.35)
                     Text("PRIV")
-                        .font(.custom("Burbank Big Condensed", size: 29))
+                        .font(.custom("BurbankBigCondensed-Black", size: 32))
                         .italic()
                         .foregroundStyle(.white)
-                        .shadow(color: .white.opacity(0.45), radius: 0.7)
+                        .shadow(color: .white.opacity(0.68), radius: 1.05)
+                        .shadow(color: .white.opacity(0.28), radius: 0.35)
                 }
 
                 Button(action: { onContinue(.freeFire) }) {
@@ -165,10 +167,11 @@ private struct FreeFireSelectionView: View {
                             .shadow(color: AppTheme.accent.opacity(0.30), radius: 16, y: 7)
 
                         Text("Free Fire")
-                            .font(.custom("Burbank Big Condensed", size: 24))
+                            .font(.custom("BurbankBigCondensed-Black", size: 26))
                             .italic()
                             .foregroundStyle(.white)
-                            .shadow(color: .white.opacity(0.35), radius: 0.6)
+                            .shadow(color: .white.opacity(0.62), radius: 1.0)
+                            .shadow(color: .white.opacity(0.24), radius: 0.35)
 
                         Text("Toque para continuar")
                             .font(.system(size: 13, weight: .semibold))
@@ -199,10 +202,11 @@ private struct FreeFireSelectionView: View {
                             .opacity(0.72)
 
                         Text("Free Fire Max")
-                            .font(.custom("Burbank Big Condensed", size: 23))
+                            .font(.custom("BurbankBigCondensed-Black", size: 25))
                             .italic()
                             .foregroundStyle(.white)
-                            .shadow(color: .white.opacity(0.30), radius: 0.6)
+                            .shadow(color: .white.opacity(0.58), radius: 1.0)
+                            .shadow(color: .white.opacity(0.22), radius: 0.35)
 
                         Text("Suporte em breve…")
                             .font(.system(size: 13, weight: .semibold))
