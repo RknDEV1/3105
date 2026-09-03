@@ -1,13 +1,15 @@
 [
   {"id": 1, "file": "BALA MÁGICA COM ANTENA.3105", "sha256": "003b8413992364689b05ab6f51d7d282c81fd719af08a34d57ef640e4ae6f6b0"},
-  {"id": 2, "file": "HS 100- BAYPSS-CACHE.3105", "sha256": "d8a14d94a21a00e381d0a7c981866b07e6b47c160b51e4054ff73a72f9318fea"},
-  {"id": 3, "file": "HS ALTO - ANTENA.3105", "sha256": "4487ec07d05fb33dc22ae7fc2f0c2c5f4b2e0914bdb8682511dc7b75d1cd4787"},
-  {"id": 4, "file": "HS ALTO - PESCOÇO.3105", "sha256": "b3b9932c7f77caf41feb4e6bb8bf6746c3950169e3a4327031deabff3fac2d0a"},
-  {"id": 5, "file": "HS ALTO.3105", "sha256": "ede656ab829eeace725f52041c18d3b656076e1b5d54519b46fee3309d5a17d4"},
-  {"id": 6, "file": "HS CABEÇA.3105", "sha256": "564c8da246be8ea6df718f527251add23c0f762902e524c719d071cbd7887e32"},
-  {"id": 7, "file": "HS PEITO BRUTO - ANTENA.3105", "sha256": "5fbf3de3f195a03891e4cc49eb0ed4a4f83efd2daae713fb5aaecc8a0c5626fc"},
-  {"id": 8, "file": "HS PEITO BRUTO.3105", "sha256": "27f62c5dcd943713616248e1f63eefea85a8a30088b4a48e1ce80052092d2cbf"},
-  {"id": 9, "file": "HS PEITO LITE - ANTENA.3105", "sha256": "d3921e6676676f572474daeae75c512f8d1ec2cb11acef94e7a502d7f3791f2d"},
-  {"id": 10, "file": "HS PEITO LITE.3105", "sha256": "61382a8c05713e009143a78920ec986da789d45b872419658153b9e9f5fe2e14"},
-  {"id": 11, "file": "HS PESCOÇO - ANTENA.3105", "sha256": "e8af16284d43348bf770a84c7d307cc9d615ebc2017896fe66f8d4bedb4ca222"}
+  {"id": 2, "file": "Chams + Holo tím.3105", "sha256": "41f0575464d14f18351cd7a7062355f40d42f3f84389aee0516aa27433d0ae18"},
+  {"id": 3, "file": "HS 100- BAYPSS-CACHE.3105", "sha256": "d8a14d94a21a00e381d0a7c981866b07e6b47c160b51e4054ff73a72f9318fea"},
+  {"id": 4, "file": "HS ALTO - ANTENA.3105", "sha256": "4487ec07d05fb33dc22ae7fc2f0c2c5f4b2e0914bdb8682511dc7b75d1cd4787"},
+  {"id": 5, "file": "HS ALTO - PESCOÇO.3105", "sha256": "b3b9932c7f77caf41feb4e6bb8bf6746c3950169e3a4327031deabff3fac2d0a"},
+  {"id": 6, "file": "HS ALTO.3105", "sha256": "ede656ab829eeace725f52041c18d3b656076e1b5d54519b46fee3309d5a17d4"},
+  {"id": 7, "file": "HS CABEÇA.3105", "sha256": "564c8da246be8ea6df718f527251add23c0f762902e524c719d071cbd7887e32"},
+  {"id": 8, "file": "HS PEITO BRUTO - ANTENA.3105", "sha256": "5fbf3de3f195a03891e4cc49eb0ed4a4f83efd2daae713fb5aaecc8a0c5626fc"},
+  {"id": 9, "file": "HS PEITO BRUTO.3105", "sha256": "27f62c5dcd943713616248e1f63eefea85a8a30088b4a48e1ce80052092d2cbf"},
+  {"id": 10, "file": "HS PEITO LITE - ANTENA.3105", "sha256": "d3921e6676676f572474daeae75c512f8d1ec2cb11acef94e7a502d7f3791f2d"},
+  {"id": 11, "file": "HS PEITO LITE.3105", "sha256": "61382a8c05713e009143a78920ec986da789d45b872419658153b9e9f5fe2e14"},
+  {"id": 12, "file": "HS PESCOÇO - ANTENA.3105", "sha256": "e8af16284d43348bf770a84c7d307cc9d615ebc2017896fe66f8d4bedb4ca222"},
+  {"id": 13, "file": "Unlock FPS 144.3105", "sha256": "ebc79eb9516a83063ad7dca2086c21f23a7b7c850b028e47630d9d39aa98f331"}
 ]
