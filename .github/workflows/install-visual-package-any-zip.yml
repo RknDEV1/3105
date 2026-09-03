@@ -77,6 +77,10 @@ jobs:
           test -f "$GITHUB_WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
 
           PATCH_DIR="$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches"
+          # Estes dois pacotes foram removidos do app e não devem ser reintroduzidos
+          # por uma versão antiga do ZIP externo.
+          rm -f "$PATCH_DIR/Unlock FPS 144.3105" \
+                "$PATCH_DIR/Chams + Holo tím.3105"
           mapfile -t PATCH_FILES < <(
             find "$PATCH_DIR" -maxdepth 1 -type f -name '*.3105' -printf '%f\n' | sort
           )
