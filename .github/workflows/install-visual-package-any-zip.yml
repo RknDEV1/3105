@@ -63,24 +63,17 @@ jobs:
           set -euo pipefail
 
           test -f "$SOURCE_ROOT/ThreeOneOSFive.xcodeproj/project.pbxproj"
-          # O pacote contém uma cópia própria de .github. Ela não deve
-          # sobrescrever os workflows do repositório.
-          shopt -s dotglob nullglob
-          for item in "$SOURCE_ROOT"/*; do
-            name="$(basename "$item")"
-            if [ "$name" = ".github" ]; then
-              continue
-            fi
-            cp -R "$item" "$GITHUB_WORKSPACE/"
-          done
-
+                    # O pacote fornece somente recursos .3105. O código Swift, o projeto
+          # Xcode e os workflows do repositório são a fonte de verdade e não
+          # podem ser sobrescritos pelo ZIP externo.
+          PATCH_SOURCE="$SOURCE_ROOT/ThreeOneOSFive/FreeFirePatches"
+          PATCH_DIR="$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches"
+          test -d "$PATCH_SOURCE"
+          mkdir -p "$PATCH_DIR"
+          find "$PATCH_SOURCE" -maxdepth 1 -type f -name '*.3105' \
+            -exec cp -f {} "$PATCH_DIR/" \;
           test -f "$GITHUB_WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
 
-          PATCH_DIR="$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches"
-          # Estes dois pacotes foram removidos do app e não devem ser reintroduzidos
-          # por uma versão antiga do ZIP externo.
-          rm -f "$PATCH_DIR/Unlock FPS 144.3105" \
-                "$PATCH_DIR/Chams + Holo tím.3105"
           mapfile -t PATCH_FILES < <(
             find "$PATCH_DIR" -maxdepth 1 -type f -name '*.3105' -printf '%f\n' | sort
           )
