@@ -3,9 +3,9 @@ import UIKit
 
 enum AppTheme {
     // Identidade CHZ PRIV: fundo preto, vermelho vivo, branco e cinza.
-    static let accent = Color(red: 0.96, green: 0.03, blue: 0.08)
-    static let accentBright = Color(red: 1.00, green: 0.12, blue: 0.16)
-    static let accentSoft = Color(red: 0.96, green: 0.03, blue: 0.08).opacity(0.16)
+    static let accent = Color(red: 1.00, green: 0.015, blue: 0.055)
+    static let accentBright = Color(red: 1.00, green: 0.16, blue: 0.19)
+    static let accentSoft = Color(red: 1.00, green: 0.015, blue: 0.055).opacity(0.16)
     static let pageBackground = Color.black
     static let consoleBackground = Color(red: 0.045, green: 0.018, blue: 0.022)
     static let cardBackground = Color(red: 0.065, green: 0.020, blue: 0.026)

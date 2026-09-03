@@ -3,6 +3,7 @@ import UIKit
 
 struct ContentView: View {
     var isFreeFireMax: Bool = false
+    let onExitToGamePicker: () -> Void
     @Environment(\.appLanguage) private var language
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @EnvironmentObject private var patchDraftCoordinator: PatchDraftCoordinator
@@ -10,8 +11,9 @@ struct ContentView: View {
     @AppStorage(FeatureVisibility.cleanerStorageKey) private var cleanerEnabled = true
     @AppStorage(FeatureVisibility.wallpapersStorageKey) private var wallpapersEnabled = true
 
-    init(isFreeFireMax: Bool = false) {
+    init(isFreeFireMax: Bool = false, onExitToGamePicker: @escaping () -> Void = {}) {
         self.isFreeFireMax = isFreeFireMax
+        self.onExitToGamePicker = onExitToGamePicker
 #if targetEnvironment(simulator)
         let arguments = ProcessInfo.processInfo.arguments
         let initialTab: Int
@@ -114,7 +116,10 @@ struct ContentView: View {
     private func sectionContent(_ section: AppSection) -> some View {
         switch section {
         case .home:
-            CHZPrivHomeView(isFreeFireMax: isFreeFireMax)
+            CHZPrivHomeView(
+                isFreeFireMax: isFreeFireMax,
+                onExitToGamePicker: onExitToGamePicker
+            )
         case .files:
             AppDataBrowserView(
                 tabSession: filesTabSession
@@ -303,6 +308,7 @@ private struct DashboardView: View {
 
 private struct CHZPrivHomeView: View {
     let isFreeFireMax: Bool
+    let onExitToGamePicker: () -> Void
 
     private enum GameTab: String, CaseIterable, Identifiable {
         case hs = "Hs"
@@ -366,7 +372,17 @@ private struct CHZPrivHomeView: View {
             }
             .scrollIndicators(.hidden)
             .background(AppTheme.pageBackground.ignoresSafeArea())
-            .toolbar(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        onExitToGamePicker()
+                    } label: {
+                        Label("Início", systemImage: "chevron.left")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .accessibilityLabel("Voltar para a tela inicial")
+                }
+            }
         }
         .tint(AppTheme.accent)
         .onAppear {

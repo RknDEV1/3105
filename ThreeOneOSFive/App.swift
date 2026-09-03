@@ -34,7 +34,15 @@ struct ThreeOneOSFiveApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                ContentView(isFreeFireMax: selectedEdition == .freeFireMax)
+                                    ContentView(
+                        isFreeFireMax: selectedEdition == .freeFireMax,
+                        onExitToGamePicker: {
+                            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                                showGamePicker = true
+                            }
+                        }
+                    )
+
                     .environmentObject(appState)
                     .environmentObject(patchDraftCoordinator)
                     .environmentObject(fileOperationCoordinator)
@@ -113,7 +121,7 @@ private struct FreeFireSelectionView: View {
     let onContinue: (GameEdition) -> Void
 
     private var artworkSide: CGFloat {
-        min(132, max(108, UIScreen.main.bounds.width * 0.30))
+        min(108, max(88, UIScreen.main.bounds.width * 0.24))
     }
 
     var body: some View {
@@ -132,59 +140,52 @@ private struct FreeFireSelectionView: View {
 
                 VStack(spacing: 5) {
                     Text("CHZ")
+                        .font(.custom("Burbank Big Condensed", size: 31))
+                        .italic()
+                        .foregroundStyle(AppTheme.accent)
+                        .shadow(color: AppTheme.accent.opacity(0.72), radius: 0.7)
+                    Text("PRIV")
                         .font(.custom("Burbank Big Condensed", size: 29))
                         .italic()
-                        .foregroundStyle(Color.red)
-                    Text("PRIV")
-                        .font(.custom("Burbank Big Condensed", size: 27))
-                        .italic()
                         .foregroundStyle(.white)
-                }
-
-                VStack(spacing: 12) {
-                    Image("FreeFire")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: artworkSide, height: artworkSide)
-                        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                                .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                        }
-                        .shadow(color: .red.opacity(0.24), radius: 16, y: 7)
-
-                    Text("Free Fire")
-                        .font(.system(size: 21, weight: .heavy))
-                        .foregroundStyle(.white)
-
-                    Text("Selecione um jogo para continuar")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color.white.opacity(0.62))
-                }
-                .padding(.vertical, 14)
-                .frame(maxWidth: .infinity)
-                .background(.ultraThinMaterial.opacity(0.82), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
+                        .shadow(color: .white.opacity(0.45), radius: 0.7)
                 }
 
                 Button(action: { onContinue(.freeFire) }) {
-                    HStack(spacing: 8) {
-                        Text("Acessar Free Fire")
-                            .font(.system(size: 15, weight: .bold))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 14, weight: .bold))
+                    VStack(spacing: 12) {
+                        Image("FreeFire")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: artworkSide, height: artworkSide)
+                            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                            }
+                            .shadow(color: AppTheme.accent.opacity(0.30), radius: 16, y: 7)
+
+                        Text("Free Fire")
+                            .font(.custom("Burbank Big Condensed", size: 24))
+                            .italic()
+                            .foregroundStyle(.white)
+                            .shadow(color: .white.opacity(0.35), radius: 0.6)
+
+                        Text("Toque para continuar")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.white.opacity(0.62))
                     }
-                    .foregroundStyle(.white)
+                    .padding(.vertical, 14)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 49)
-                    .background(Color.red.opacity(0.90), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .shadow(color: .red.opacity(0.28), radius: 14, y: 7)
+                    .background(.ultraThinMaterial.opacity(0.82), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
+                    }
                 }
                 .buttonStyle(.plain)
-                    .accessibilityLabel("Acessar Free Fire")
+                .accessibilityLabel("Free Fire, tocar para acessar")
 
+                Button(action: { onContinue(.freeFireMax) }) {
                     VStack(spacing: 12) {
                         Image("FreeFireMax")
                             .resizable()
@@ -198,10 +199,12 @@ private struct FreeFireSelectionView: View {
                             .opacity(0.72)
 
                         Text("Free Fire Max")
-                            .font(.system(size: 20, weight: .heavy))
+                            .font(.custom("Burbank Big Condensed", size: 23))
+                            .italic()
                             .foregroundStyle(.white)
+                            .shadow(color: .white.opacity(0.30), radius: 0.6)
 
-                        Text("Suporte em breve")
+                        Text("Suporte em breve…")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Color.white.opacity(0.58))
                     }
@@ -212,11 +215,9 @@ private struct FreeFireSelectionView: View {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture { onContinue(.freeFireMax) }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityLabel("Free Fire Max, tocar para selecionar")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Free Fire Max, tocar para acessar")
 
                     Spacer(minLength: 22)
                 }
