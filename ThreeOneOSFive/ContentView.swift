@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
+    var isFreeFireMax: Bool = false
     @Environment(\.appLanguage) private var language
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @EnvironmentObject private var patchDraftCoordinator: PatchDraftCoordinator
@@ -112,7 +113,7 @@ struct ContentView: View {
     private func sectionContent(_ section: AppSection) -> some View {
         switch section {
         case .home:
-            CHZPrivHomeView()
+            CHZPrivHomeView(isFreeFireMax: isFreeFireMax)
         case .files:
             AppDataBrowserView(
                 tabSession: filesTabSession
@@ -300,8 +301,11 @@ private struct DashboardView: View {
 
 
 private struct CHZPrivHomeView: View {
+    let isFreeFireMax: Bool
+
     private enum GameTab: String, CaseIterable, Identifiable {
-        case freeFire = "Aimbot"
+        case hs = "Hs"
+        case hsAntena = "Hs + Antena"
         case hologramas = "Hologramas"
         var id: String { rawValue }
     }
@@ -335,7 +339,7 @@ private struct CHZPrivHomeView: View {
         let level: LogLevel
     }
 
-    @State private var selectedGame: GameTab = .freeFire
+    @State private var selectedGame: GameTab = .hs
     @State private var freeFirePatches: [PatchLibraryItem] = []
     @State private var enabledPatchIDs = Set<UUID>()
     @State private var isWorking = false
@@ -365,6 +369,7 @@ private struct CHZPrivHomeView: View {
         }
         .tint(AppTheme.accent)
         .onAppear {
+            guard !isFreeFireMax else { return }
             PatchProjectLibrary.installBundledOriginalFreeFirePatches()
             reloadFreeFirePatches()
         }
@@ -372,12 +377,12 @@ private struct CHZPrivHomeView: View {
 
     private var logo: some View {
         VStack(spacing: -2) {
-            Text("CHZ")
-                .font(.system(size: 36, weight: .black))
+                Text("CHZ")
+                    .font(.custom("Burbank Big Condensed", size: 31))
                 .italic()
                 .foregroundStyle(AppTheme.accent)
             Text("PRIV")
-                .font(.system(size: 33, weight: .black))
+                .font(.custom("Burbank Big Condensed", size: 29))
                 .italic()
                 .foregroundStyle(.white)
         }
@@ -409,11 +414,14 @@ private struct CHZPrivHomeView: View {
                 .buttonStyle(.plain)
             }
         }
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .background(.ultraThinMaterial.opacity(0.72), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 0.7)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 0.7)
         }
+        .shadow(color: AppTheme.accent.opacity(0.12), radius: 14, y: 7)
+        .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedGame)
     }
 
     private var functions: some View {
@@ -423,18 +431,29 @@ private struct CHZPrivHomeView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(.white)
                 Spacer()
-                Text("\(visiblePatches.count) patches")
+                Text("\(visiblePatches.count) \(visiblePatches.count == 1 ? "patch" : "patches")")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(AppTheme.secondaryText)
             }
             .padding(.bottom, 2)
 
-            if !visiblePatches.isEmpty {
+            if isFreeFireMax {
+                Text("Suporte em breve…")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(AppTheme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 34)
+                    .background(.ultraThinMaterial.opacity(0.55), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.white.opacity(0.14), lineWidth: 0.7)
+                    }
+            } else if !visiblePatches.isEmpty {
                 ForEach(visiblePatches) { item in
                     functionRow(item: item)
                 }
             } else {
-                Text("Nenhum patch disponível para \(selectedGame.rawValue)")
+                Text("Nenhum arquivo disponível para \(selectedGame.rawValue)")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(AppTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -449,7 +468,7 @@ private struct CHZPrivHomeView: View {
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
                 Text(title)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(2)
                 Text(active ? "Patch ativo · backup protegido" : "Substituição autorizada")
@@ -495,8 +514,17 @@ private struct CHZPrivHomeView: View {
         freeFirePatches.filter { item in
             let title = (item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent)
                 .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            let belongsToHologramas = title.contains("hs peito")
-            return selectedGame == .hologramas ? belongsToHologramas : !belongsToHologramas
+            let isAntenna = title.contains("antena")
+            let isHologram = title.contains("holograma") || title.contains("holo") || title.contains("chams")
+            let isHsPeito = title.contains("hs peito")
+            switch selectedGame {
+            case .hs:
+                return !isAntenna && !isHologram && !isHsPeito
+            case .hsAntena:
+                return isAntenna
+            case .hologramas:
+                return isHologram || isHsPeito
+            }
         }
     }
 
@@ -683,7 +711,7 @@ private struct CHZPrivHomeView: View {
 private struct CHZSwitchStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         Button {
-            withAnimation(.easeInOut(duration: 0.16)) {
+            withAnimation(.spring(response: 0.30, dampingFraction: 0.78)) {
                 configuration.isOn.toggle()
             }
         } label: {

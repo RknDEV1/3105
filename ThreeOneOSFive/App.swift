@@ -10,6 +10,7 @@ struct ThreeOneOSFiveApp: App {
     // A interface CHZ PRIV abre após a seleção do jogo.
     @State private var showOnboarding = false
     @State private var showGamePicker = true
+    @State private var selectedEdition: GameEdition = .freeFire
     @State private var showAttribution = false
     @State private var updateOffer: AppUpdateChecker.Offer?
     @Environment(\.scenePhase) private var scenePhase
@@ -33,7 +34,7 @@ struct ThreeOneOSFiveApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                ContentView()
+                ContentView(isFreeFireMax: selectedEdition == .freeFireMax)
                     .environmentObject(appState)
                     .environmentObject(patchDraftCoordinator)
                     .environmentObject(fileOperationCoordinator)
@@ -43,7 +44,8 @@ struct ThreeOneOSFiveApp: App {
                     .allowsHitTesting(!showOnboarding && !showGamePicker)
 
                 if showGamePicker && !showOnboarding {
-                    FreeFireSelectionView {
+                    FreeFireSelectionView { edition in
+                        selectedEdition = edition
                         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                             showGamePicker = false
                         }
@@ -102,8 +104,13 @@ struct ThreeOneOSFiveApp: App {
     }
 }
 
+private enum GameEdition {
+    case freeFire
+    case freeFireMax
+}
+
 private struct FreeFireSelectionView: View {
-    let onContinue: () -> Void
+    let onContinue: (GameEdition) -> Void
 
     private var artworkSide: CGFloat {
         min(132, max(108, UIScreen.main.bounds.width * 0.30))
@@ -125,11 +132,11 @@ private struct FreeFireSelectionView: View {
 
                 VStack(spacing: 5) {
                     Text("CHZ")
-                        .font(.system(size: 32, weight: .black))
+                        .font(.custom("Burbank Big Condensed", size: 29))
                         .italic()
                         .foregroundStyle(Color.red)
                     Text("PRIV")
-                        .font(.system(size: 29, weight: .black))
+                        .font(.custom("Burbank Big Condensed", size: 27))
                         .italic()
                         .foregroundStyle(.white)
                 }
@@ -162,7 +169,7 @@ private struct FreeFireSelectionView: View {
                         .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
                 }
 
-                Button(action: onContinue) {
+                Button(action: { onContinue(.freeFire) }) {
                     HStack(spacing: 8) {
                         Text("Acessar Free Fire")
                             .font(.system(size: 15, weight: .bold))
@@ -205,8 +212,11 @@ private struct FreeFireSelectionView: View {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture { onContinue(.freeFireMax) }
                     .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Free Fire Max, suporte em breve")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityLabel("Free Fire Max, tocar para selecionar")
 
                     Spacer(minLength: 22)
                 }

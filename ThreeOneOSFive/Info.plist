@@ -8,6 +8,10 @@
     <string>3105</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
+    <key>UIAppFonts</key>
+    <array>
+        <string>Fonts/BurbankBigCondensed-Regular.otf</string>
+    </array>
     <key>CFBundleIdentifier</key>
     <string>com.apple.mobile.MobileHouseArrest</string>
     <key>CFBundleInfoDictionaryVersion</key>
