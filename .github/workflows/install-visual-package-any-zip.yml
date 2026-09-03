@@ -2,6 +2,12 @@ name: Install visual rebrand package
 
 on:
   workflow_dispatch:
+    inputs:
+      package_url:
+        description: "URL direta do pacote ZIP de revisão"
+        required: false
+        type: string
+        default: "https://www.dropbox.com/scl/fi/83wce3ptzugv2qpi8afnw/3105_chz_priv_review_package.zip?rlkey=nwv4qkqiagdyt4mzepxgyg8if&st=h5k3bjrj&dl=1"
 
 permissions:
   contents: write
@@ -15,34 +21,65 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract and install modified project
+      - name: Download and validate review package
+        id: package
         shell: bash
+        env:
+          PACKAGE_URL: ${{ inputs.package_url }}
         run: |
           set -euo pipefail
+
           WORK_DIR="$RUNNER_TEMP/visual-package"
-          rm -rf "$WORK_DIR"
+          ZIP_FILE="$RUNNER_TEMP/3105-review-package.zip"
+          rm -rf "$WORK_DIR" "$ZIP_FILE"
           mkdir -p "$WORK_DIR"
-          ZIP_FILE=$(find . -maxdepth 3 -type f -iname '*.zip' -print -quit)
-          test -n "$ZIP_FILE" || { echo "No ZIP file found in the repository."; find . -maxdepth 3 -type f -print; exit 1; }
-          echo "Using ZIP: $ZIP_FILE"
+
+          echo "Downloading review package..."
+          curl --location --fail --show-error --silent --retry 3 \
+            "$PACKAGE_URL" \
+            --output "$ZIP_FILE"
+
+          test -s "$ZIP_FILE"
+          unzip -t "$ZIP_FILE" >/dev/null
           unzip -q "$ZIP_FILE" -d "$WORK_DIR"
-          SOURCE=$(find "$WORK_DIR" -type d -name ThreeOneOSFive.xcodeproj -print -quit | sed 's#/ThreeOneOSFive.xcodeproj$##')
-          test -n "$SOURCE" || { echo "Could not find ThreeOneOSFive.xcodeproj inside the ZIP."; find "$WORK_DIR" -maxdepth 5 -print; exit 1; }
-          echo "Installing project from: $SOURCE"
-          cp -R "$SOURCE"/. .
-          rm -f "$ZIP_FILE"
-          rm -rf "$WORK_DIR"
+
+          PROJECT_FILE="$(find "$WORK_DIR" -type f -path '*/ThreeOneOSFive.xcodeproj/project.pbxproj' -print -quit)"
+          if [ -z "$PROJECT_FILE" ]; then
+            echo "ThreeOneOSFive.xcodeproj não foi encontrado no pacote." >&2
+            echo "Conteúdo extraído:" >&2
+            find "$WORK_DIR" -maxdepth 4 -print >&2
+            exit 1
+          fi
+
+          SOURCE_ROOT="$(dirname "$(dirname "$PROJECT_FILE")")"
+          echo "source_root=$SOURCE_ROOT" >> "$GITHUB_OUTPUT"
+          echo "Projeto encontrado em: $SOURCE_ROOT"
+
+      - name: Install project from review package
+        shell: bash
+        env:
+          SOURCE_ROOT: ${{ steps.package.outputs.source_root }}
+        run: |
+          set -euo pipefail
+
+          test -f "$SOURCE_ROOT/ThreeOneOSFive.xcodeproj/project.pbxproj"
+          cp -R "$SOURCE_ROOT"/. "$GITHUB_WORKSPACE"/
+          test -f "$GITHUB_WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
+          test -f "$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches/manifest.json"
 
       - name: Commit installed project
         shell: bash
         run: |
           set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "Apply CHZ PRIV red visual identity to v1.1.1"
+
+          git commit -m "Apply CHZ PRIV review package"
           git push
