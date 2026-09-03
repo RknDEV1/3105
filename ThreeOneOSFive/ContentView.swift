@@ -349,6 +349,8 @@ private struct CHZPrivHomeView: View {
     @State private var selectedGame: GameTab = .hs
     @State private var freeFirePatches: [PatchLibraryItem] = []
     @State private var enabledPatchIDs = Set<UUID>()
+    @State private var is144FPSDemoEnabled = false
+    @State private var isChamsHoloDemoEnabled = false
     @State private var isWorking = false
     @State private var activityLog = [LogEntry(
         timestamp: Date().formatted(date: .omitted, time: .shortened),
@@ -470,6 +472,24 @@ private struct CHZPrivHomeView: View {
                             .stroke(Color.white.opacity(0.14), lineWidth: 0.7)
                     }
             } else {
+                if selectedGame == .hs {
+                    demoFunctionRow(
+                        title: "144 FPS",
+                        subtitle: "Demonstração visual · nenhum arquivo é alterado",
+                        isOn: $is144FPSDemoEnabled,
+                        demoKey: "144 FPS"
+                    )
+                }
+
+                if selectedGame == .hologramas {
+                    demoFunctionRow(
+                        title: "Chams + Holo Tim",
+                        subtitle: "Demonstração visual · nenhum arquivo é alterado",
+                        isOn: $isChamsHoloDemoEnabled,
+                        demoKey: "Chams + Holo Tim"
+                    )
+                }
+
                 if !visiblePatches.isEmpty {
                     ForEach(visiblePatches) { item in
                         functionRow(item: item)
@@ -486,7 +506,67 @@ private struct CHZPrivHomeView: View {
     }
 
     private var displayedFunctionCount: Int {
-        visiblePatches.count
+        visiblePatches.count + (selectedGame == .hs || selectedGame == .hologramas ? 1 : 0)
+    }
+
+    private func demoFunctionRow(
+        title: String,
+        subtitle: String,
+        isOn: Binding<Bool>,
+        demoKey: String
+    ) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                Text(isOn.wrappedValue ? "Exibição ativa · somente interface" : subtitle)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(isOn.wrappedValue ? AppTheme.success : AppTheme.secondaryText)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 6)
+            Toggle(title, isOn: Binding(
+                get: { isOn.wrappedValue },
+                set: { updateDemoState(key: demoKey, isEnabled: $0, binding: isOn) }
+            ))
+            .labelsHidden()
+            .toggleStyle(CHZSwitchStyle())
+        }
+        .padding(.horizontal, 13)
+        .frame(minHeight: 70)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(AppTheme.accent.opacity(0.48), lineWidth: 0.8)
+        }
+        .overlay(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(LinearGradient(
+                    colors: [AppTheme.accent.opacity(0.16), .clear],
+                    startPoint: .topLeading,
+                    endPoint: .center
+                ))
+                .frame(height: 28)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .allowsHitTesting(false)
+        }
+    }
+
+    private func updateDemoState(key: String, isEnabled: Bool, binding: Binding<Bool>) {
+        binding.wrappedValue = isEnabled
+        activityLog.removeAll(keepingCapacity: true)
+        if isEnabled {
+            appendLog("Iniciando ativação visual — \(key)", level: .info)
+            appendLog("Configurando exibição somente na interface", level: .progress)
+            appendLog("\(key) ativado visualmente — nenhum arquivo foi alterado", level: .success)
+        } else {
+            appendLog("Iniciando desativação visual — \(key)", level: .info)
+            appendLog("Removendo estado visual da interface", level: .progress)
+            appendLog("\(key) desativado — nenhum arquivo foi alterado", level: .success)
+        }
     }
 
     private func functionRow(item: PatchLibraryItem) -> some View {
@@ -539,13 +619,10 @@ private struct CHZPrivHomeView: View {
 
     private var visiblePatches: [PatchLibraryItem] {
         freeFirePatches.filter { item in
-            let packageFilename = item.packageURL.deletingPathExtension().lastPathComponent
-            let searchableName = [item.project?.name, packageFilename]
-                .compactMap { $0 }
-                .joined(separator: " ")
+            let title = (item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent)
                 .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            let isAntenna = searchableName.contains("antena")
-            let isHologram = searchableName.contains("holograma") || searchableName.contains("holo") || searchableName.contains("chams")
+            let isAntenna = title.contains("antena")
+            let isHologram = title.contains("holograma") || title.contains("holo") || title.contains("chams")
             switch selectedGame {
             case .hs:
                 return !isAntenna && !isHologram
