@@ -92,8 +92,7 @@ jobs:
               digest="$(sha256sum "$PATCH_DIR/$filename" | awk '{print $1}')"
               comma=','
               if [ "$index" -eq "$last_index" ]; then comma=''; fi
-              printf '  {"id": %d, "file": "%s", "sha256": "%s"}%s\n' \\
-                "$((index + 1))" "$filename" "$digest" "$comma"
+              printf '  {"id": %d, "file": "%s", "sha256": "%s"}%s\n' "$((index + 1))" "$filename" "$digest" "$comma"
             done
             echo ']'
           } > "$PATCH_DIR/manifest.json"
