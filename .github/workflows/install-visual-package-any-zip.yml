@@ -7,7 +7,7 @@ on:
         description: "URL direta do pacote ZIP de revisão"
         required: false
         type: string
-        default: "https://www.dropbox.com/scl/fi/83wce3ptzugv2qpi8afnw/3105_chz_priv_review_package.zip?rlkey=nwv4qkqiagdyt4mzepxgyg8if&st=h5k3bjrj&dl=1"
+        default: "https://www.dropbox.com/scl/fi/0fru3mxmps2ysg7j2wds0/Patches.zip?rlkey=uexwyid477cnk9hl87ptog5xv&st=qjns13ad&dl=1"
 
 permissions:
   contents: write
@@ -43,39 +43,36 @@ jobs:
           unzip -t "$ZIP_FILE" >/dev/null
           unzip -q "$ZIP_FILE" -d "$WORK_DIR"
 
-          PROJECT_FILE="$(find "$WORK_DIR" -type f -path '*/ThreeOneOSFive.xcodeproj/project.pbxproj' -print -quit)"
-          if [ -z "$PROJECT_FILE" ]; then
-            echo "ThreeOneOSFive.xcodeproj não foi encontrado no pacote." >&2
-            echo "Conteúdo extraído:" >&2
-            find "$WORK_DIR" -maxdepth 4 -print >&2
-            exit 1
+          PATCH_SOURCE="$(find "$WORK_DIR" -type d -name 'Patches' -print -quit)"
+          if [ -z "$PATCH_SOURCE" ]; then
+            PATCH_SOURCE="$WORK_DIR"
           fi
-
-          SOURCE_ROOT="$(dirname "$(dirname "$PROJECT_FILE")")"
-          echo "source_root=$SOURCE_ROOT" >> "$GITHUB_OUTPUT"
-          echo "Projeto encontrado em: $SOURCE_ROOT"
+          test -n "$(find "$PATCH_SOURCE" -type f -name '*.3105' -print -quit)"
+          echo "patch_source=$PATCH_SOURCE" >> "$GITHUB_OUTPUT"
+          echo "Patches encontrados em: $PATCH_SOURCE"
 
       - name: Install project from review package
         shell: bash
         env:
-          SOURCE_ROOT: ${{ steps.package.outputs.source_root }}
+          PATCH_SOURCE: ${{ steps.package.outputs.patch_source }}
         run: |
           set -euo pipefail
 
-          test -f "$SOURCE_ROOT/ThreeOneOSFive.xcodeproj/project.pbxproj"
-                    # O pacote fornece somente recursos .3105. O código Swift, o projeto
-          # Xcode e os workflows do repositório são a fonte de verdade e não
-          # podem ser sobrescritos pelo ZIP externo.
-          PATCH_SOURCE="$SOURCE_ROOT/ThreeOneOSFive/FreeFirePatches"
+          # O pacote fornece somente recursos .3105. O código Swift, o projeto
+          # Xcode e os workflows do repositório são a fonte de verdade.
           PATCH_DIR="$GITHUB_WORKSPACE/ThreeOneOSFive/FreeFirePatches"
-          test -d "$PATCH_SOURCE"
+          rm -rf "$PATCH_DIR"
           mkdir -p "$PATCH_DIR"
-          find "$PATCH_SOURCE" -maxdepth 1 -type f -name '*.3105' \
-            -exec cp -f {} "$PATCH_DIR/" \;
+          while IFS= read -r -d '' source_file; do
+            relative_path="${source_file#"$PATCH_SOURCE"/}"
+            destination="$PATCH_DIR/$relative_path"
+            mkdir -p "$(dirname "$destination")"
+            cp -f "$source_file" "$destination"
+          done < <(find "$PATCH_SOURCE" -type f -name '*.3105' -print0)
           test -f "$GITHUB_WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
 
           mapfile -t PATCH_FILES < <(
-            find "$PATCH_DIR" -maxdepth 1 -type f -name '*.3105' -printf '%f\n' | sort
+            find "$PATCH_DIR" -type f -name '*.3105' -printf '%P\n' | sort
           )
           test "${#PATCH_FILES[@]}" -gt 0
 
@@ -85,16 +82,19 @@ jobs:
             echo '['
             last_index=$((${#PATCH_FILES[@]} - 1))
             for index in "${!PATCH_FILES[@]}"; do
-              filename="${PATCH_FILES[$index]}"
-              digest="$(sha256sum "$PATCH_DIR/$filename" | awk '{print $1}')"
+              relative_path="${PATCH_FILES[$index]}"
+              filename="$(basename "$relative_path")"
+              category="$(dirname "$relative_path")"
+              digest="$(sha256sum "$PATCH_DIR/$relative_path" | awk '{print $1}')"
               comma=','
               if [ "$index" -eq "$last_index" ]; then comma=''; fi
-              printf '  {"id": %d, "file": "%s", "sha256": "%s"}%s\n' "$((index + 1))" "$filename" "$digest" "$comma"
+              printf '  {"id": %d, "category": "%s", "file": "%s", "path": "%s", "sha256": "%s"}%s\n' "$((index + 1))" "$category" "$filename" "$relative_path" "$digest" "$comma"
             done
             echo ']'
           } > "$PATCH_DIR/manifest.json"
 
           test "$(grep -c '"sha256"' "$PATCH_DIR/manifest.json")" -eq "${#PATCH_FILES[@]}"
+          test "$(grep -c '"category"' "$PATCH_DIR/manifest.json")" -eq "${#PATCH_FILES[@]}"
 
           # Falhar antes do commit se algum workflow tiver sido alterado.
           if ! git diff --quiet -- .github; then
