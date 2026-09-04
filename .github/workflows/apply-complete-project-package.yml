@@ -1,0 +1,88 @@
+name: Apply complete project package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_url:
+        description: "URL direta do ZIP completo do projeto"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download and validate complete package
+        id: package
+        shell: bash
+        env:
+          PACKAGE_URL: ${{ inputs.package_url }}
+        run: |
+          set -euo pipefail
+          WORK_DIR="$RUNNER_TEMP/complete-project-package"
+          ZIP_FILE="$RUNNER_TEMP/3105-complete-project.zip"
+          rm -rf "$WORK_DIR" "$ZIP_FILE"
+          mkdir -p "$WORK_DIR"
+
+          curl --location --fail --show-error --silent --retry 3 \
+            "$PACKAGE_URL" \
+            --output "$ZIP_FILE"
+          test -s "$ZIP_FILE"
+          unzip -t "$ZIP_FILE" >/dev/null
+          unzip -q "$ZIP_FILE" -d "$WORK_DIR"
+
+          PROJECT_FILE="$(find "$WORK_DIR" -type f -path '*/ThreeOneOSFive.xcodeproj/project.pbxproj' -print -quit)"
+          test -n "$PROJECT_FILE"
+          SOURCE_ROOT="$(dirname "$(dirname "$PROJECT_FILE")")"
+          test -f "$SOURCE_ROOT/ThreeOneOSFive.xcodeproj/project.pbxproj"
+
+          # O pacote completo não pode substituir o GitHub Action que está em execução.
+          if find "$SOURCE_ROOT/.github" -type f -print -quit 2>/dev/null | grep -q .; then
+            echo "O pacote não pode conter .github; use o workflow já instalado no repositório." >&2
+            exit 1
+          fi
+          if find "$SOURCE_ROOT/.git" -print -quit 2>/dev/null | grep -q .; then
+            echo "O pacote não pode conter .git." >&2
+            exit 1
+          fi
+          echo "source_root=$SOURCE_ROOT" >> "$GITHUB_OUTPUT"
+
+      - name: Replace and add complete project files
+        shell: bash
+        env:
+          SOURCE_ROOT: ${{ steps.package.outputs.source_root }}
+        run: |
+          set -euo pipefail
+          command -v rsync >/dev/null
+
+          # Substitui/adiciona todo o projeto, mas preserva o checkout e os workflows.
+          rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            "$SOURCE_ROOT/" "$GITHUB_WORKSPACE/"
+
+          test -f "$GITHUB_WORKSPACE/ThreeOneOSFive.xcodeproj/project.pbxproj"
+          test -f "$GITHUB_WORKSPACE/Scripts/validate_patch_categories.py"
+          python3 "$GITHUB_WORKSPACE/Scripts/validate_patch_categories.py"
+
+      - name: Commit and push complete project
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Apply complete CHZ PRIV project package"
+          git push
