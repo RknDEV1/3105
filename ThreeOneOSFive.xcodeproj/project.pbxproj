@@ -10,6 +10,7 @@
 		3105L401 /* Fortnite.otf in Resources */ = {isa = PBXBuildFile; fileRef = 3105L400; };
 		3105A200 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A020; };
 		3105A201 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A021; };
+		3105A243 /* LicenseInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A242; };
 		3105A203 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A023; };
 		3105A204 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A024; };
 		3105A205 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A025; };
@@ -69,39 +70,30 @@
 		3105A234 /* AppDataBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105A105; };
 		3105A228 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3105A120; };
 		3105A211 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3105A031; };
-		3105L201 /* BALA MÁGICA COM ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L101; };
-		3105L202 /* Unlock FPS 144.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L102; };
-		3105L203 /* HS 100- BAYPSS-CACHE.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L103; };
-		3105L204 /* HS ALTO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L104; };
-		3105L205 /* HS ALTO - PESCOÇO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L105; };
-		3105L206 /* HS ALTO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L106; };
-		3105L207 /* HS CABEÇA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L107; };
-		3105L208 /* HS PEITO BRUTO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L108; };
-		3105L209 /* HS PEITO BRUTO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L109; };
-		3105L210 /* HS PEITO LITE - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L110; };
-		3105L211 /* HS PEITO LITE.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L111; };
-		3105L212 /* HS PESCOÇO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L112; };
-		3105L213 /* Chams + Holo tím.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105L113; };
+		3105N201 /* HS ALTO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N101; };
+		3105N202 /* HS ALTO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N102; };
+		3105N203 /* HS PESCO-ALTO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N103; };
+		3105N204 /* HS PESCOÇO - ANTENA.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N104; };
+		3105N205 /* HS PESCOÇO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N105; };
+		3105N206 /* HS 100- BAYPSS.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N106; };
+		3105N207 /* HS PEITO-PESCOÇO.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N107; };
+		3105N208 /* PESCOÇO BAYPS.3105 in Resources */ = {isa = PBXBuildFile; fileRef = 3105N108; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		3105L400 /* Fortnite.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Fortnite.otf"; sourceTree = "<group>"; };
-		3105L101 /* BALA MÁGICA COM ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/BALA MÁGICA COM ANTENA.3105"; sourceTree = "<group>"; };
-		3105L102 /* Unlock FPS 144.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Unlock FPS 144.3105"; sourceTree = "<group>"; };
-		3105L103 /* HS 100- BAYPSS-CACHE.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS 100- BAYPSS-CACHE.3105"; sourceTree = "<group>"; };
-		3105L104 /* HS ALTO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO - ANTENA.3105"; sourceTree = "<group>"; };
-		3105L105 /* HS ALTO - PESCOÇO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO - PESCOÇO.3105"; sourceTree = "<group>"; };
-		3105L106 /* HS ALTO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS ALTO.3105"; sourceTree = "<group>"; };
-		3105L107 /* HS CABEÇA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS CABEÇA.3105"; sourceTree = "<group>"; };
-		3105L108 /* HS PEITO BRUTO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO BRUTO - ANTENA.3105"; sourceTree = "<group>"; };
-		3105L109 /* HS PEITO BRUTO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO BRUTO.3105"; sourceTree = "<group>"; };
-		3105L110 /* HS PEITO LITE - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO LITE - ANTENA.3105"; sourceTree = "<group>"; };
-		3105L111 /* HS PEITO LITE.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PEITO LITE.3105"; sourceTree = "<group>"; };
-		3105L112 /* HS PESCOÇO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/HS PESCOÇO - ANTENA.3105"; sourceTree = "<group>"; };
-		3105L113 /* Chams + Holo tím.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Chams + Holo tím.3105"; sourceTree = "<group>"; };
+		3105N101 /* HS ALTO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Avatar/HS ALTO - ANTENA.3105"; sourceTree = "<group>"; };
+		3105N102 /* HS ALTO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Avatar/HS ALTO.3105"; sourceTree = "<group>"; };
+		3105N103 /* HS PESCO-ALTO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Avatar/HS PESCO-ALTO.3105"; sourceTree = "<group>"; };
+		3105N104 /* HS PESCOÇO - ANTENA.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Avatar/HS PESCOÇO - ANTENA.3105"; sourceTree = "<group>"; };
+		3105N105 /* HS PESCOÇO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Avatar/HS PESCOÇO.3105"; sourceTree = "<group>"; };
+		3105N106 /* HS 100- BAYPSS.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Cache/HS 100- BAYPSS.3105"; sourceTree = "<group>"; };
+		3105N107 /* HS PEITO-PESCOÇO.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Cache/HS PEITO-PESCOÇO.3105"; sourceTree = "<group>"; };
+		3105N108 /* PESCOÇO BAYPS.3105 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ThreeOneOSFive/FreeFirePatches/Cache/PESCOÇO BAYPS.3105"; sourceTree = "<group>"; };
 		3105A010 /* 3105.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "3105.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3105A020 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		3105A021 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		3105A242 /* LicenseInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseInfoView.swift; sourceTree = "<group>"; };
 		3105A023 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		3105A024 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		3105A025 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
@@ -206,6 +198,7 @@
 				3105A060 /* Info.plist */,
 				3105A020 /* App.swift */,
 				3105A021 /* ContentView.swift */,
+				3105A242 /* LicenseInfoView.swift */,
 				3105A403 /* exploit */,
 				3105A404 /* views */,
 				3105A405 /* helpers */,
@@ -381,19 +374,14 @@
                     3105A211,
                     3105L401,
                     3105A228,
-					3105L201,
-					3105L202,
-					3105L203,
-					3105L204,
-					3105L205,
-					3105L206,
-					3105L207,
-					3105L208,
-					3105L209,
-					3105L210,
-					3105L211,
-					3105L212,
-					3105L213,
+						3105N201,
+						3105N202,
+						3105N203,
+						3105N204,
+						3105N205,
+						3105N206,
+						3105N207,
+						3105N208,
                 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -404,7 +392,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3105A200, 3105A201, 3105A203, 3105A204,
+									3105A200, 3105A201, 3105A243, 3105A203, 3105A204,
+
 				3105A205, 3105A206, 3105A207, 3105A209,
 				3105A210, 3105A220, 3105A221, 3105A222, 3105A223,
 				3105A224, 3105A225,
