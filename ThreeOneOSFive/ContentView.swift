@@ -309,12 +309,11 @@ private struct DashboardView: View {
 private struct CHZPrivHomeView: View {
     let isFreeFireMax: Bool
     let onExitToGamePicker: () -> Void
+    @EnvironmentObject private var appState: AppState
 
-    private enum GameTab: String, CaseIterable, Identifiable {
-        case hs = "Hs"
-        case hsAntena = "Hs + Antena"
-        case hologramas = "Hologramas"
-        var id: String { rawValue }
+    private enum HomePage {
+        case license
+        case injector
     }
 
     private enum LogLevel: Equatable {
@@ -346,7 +345,7 @@ private struct CHZPrivHomeView: View {
         let level: LogLevel
     }
 
-    @State private var selectedGame: GameTab = .hs
+    @State private var selectedPage: HomePage = .injector
     @State private var freeFirePatches: [PatchLibraryItem] = []
     @State private var enabledPatchIDs = Set<UUID>()
     @State private var isWorking = false
@@ -358,19 +357,29 @@ private struct CHZPrivHomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 13) {
-                    logo
-                    activityLogView
-                    gameTabs
-                    functions
-                    backupStatus
+            ZStack(alignment: .bottom) {
+                Group {
+                    if selectedPage == .license {
+                        LicenseInfoView()
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 13) {
+                                logo
+                                activityLogView
+                                functions
+                                backupStatus
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 10)
+                            .padding(.bottom, 112)
+                        }
+                        .scrollIndicators(.hidden)
+                    }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 10)
-                .padding(.bottom, 18)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                bottomNavigation
             }
-            .scrollIndicators(.hidden)
             .background(AppTheme.pageBackground.ignoresSafeArea())
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -392,6 +401,54 @@ private struct CHZPrivHomeView: View {
         }
     }
 
+    private var bottomNavigation: some View {
+        HStack(spacing: 4) {
+            bottomNavigationItem(.license, title: "Início", symbol: "house.fill")
+            bottomNavigationItem(.injector, title: "Injetor", symbol: "gamecontroller.fill")
+        }
+        .padding(5)
+        .background(.ultraThinMaterial, in: Capsule(style: .continuous))
+        .background(AppTheme.cardBackground.opacity(0.84), in: Capsule(style: .continuous))
+        .overlay {
+            Capsule(style: .continuous)
+                .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
+        }
+        .shadow(color: AppTheme.accent.opacity(0.22), radius: 18, y: 8)
+        .padding(.horizontal, 44)
+        .padding(.bottom, 10)
+    }
+
+    private func bottomNavigationItem(_ page: HomePage, title: String, symbol: String) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                selectedPage = page
+            }
+        } label: {
+            VStack(spacing: 3) {
+                Image(systemName: symbol)
+                    .font(.system(size: 20, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+            }
+            .foregroundStyle(selectedPage == page ? AppTheme.accentBright : AppTheme.secondaryText)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background {
+                if selectedPage == page {
+                    Capsule(style: .continuous)
+                        .fill(AppTheme.accent.opacity(0.16))
+                        .overlay {
+                            Capsule(style: .continuous)
+                                .stroke(AppTheme.accent.opacity(0.35), lineWidth: 0.7)
+                        }
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(selectedPage == page ? .isSelected : [])
+    }
+
     private var logo: some View {
         VStack(spacing: -2) {
                 Text("CHZ")
@@ -411,53 +468,8 @@ private struct CHZPrivHomeView: View {
         .padding(.top, 6)
     }
 
-    private var gameTabs: some View {
-        HStack(spacing: 0) {
-            ForEach(GameTab.allCases) { tab in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.18)) {
-                        selectedGame = tab
-                    }
-                } label: {
-                    VStack(spacing: 0) {
-                        Text(tab.rawValue)
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(selectedGame == tab ? .white : AppTheme.secondaryText)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 40)
-                        Capsule(style: .continuous)
-                            .fill(selectedGame == tab ? AppTheme.accentBright : .clear)
-                            .frame(height: 3)
-                            .padding(.horizontal, 14)
-                    }
-                    .background(selectedGame == tab ? AppTheme.accent.opacity(0.10) : .clear)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .background(.ultraThinMaterial.opacity(0.72), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .background(Color.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.white.opacity(0.16), lineWidth: 0.7)
-        }
-        .shadow(color: AppTheme.accent.opacity(0.12), radius: 14, y: 7)
-        .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedGame)
-    }
-
     private var functions: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Funções")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-                Spacer()
-                Text("\(displayedFunctionCount) \(displayedFunctionCount == 1 ? "item" : "itens")")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(AppTheme.secondaryText)
-            }
-            .padding(.bottom, 2)
-
+        VStack(alignment: .leading, spacing: 24) {
             if isFreeFireMax {
                 Text("Suporte em breve…")
                     .font(.system(size: 16, weight: .semibold))
@@ -470,33 +482,55 @@ private struct CHZPrivHomeView: View {
                             .stroke(Color.white.opacity(0.14), lineWidth: 0.7)
                     }
             } else {
-                if !visiblePatches.isEmpty {
-                    ForEach(visiblePatches) { item in
-                        functionRow(item: item)
-                    }
-                } else if selectedGame != .hs && selectedGame != .hologramas {
-                    Text("Nenhum arquivo disponível para \(selectedGame.rawValue)")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(AppTheme.secondaryText)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 26)
-                }
+                categorySection(.avatar)
+                categorySection(.cache)
             }
         }
     }
 
-    private var displayedFunctionCount: Int {
-        visiblePatches.count
+    @ViewBuilder
+    private func categorySection(_ category: PatchCategory) -> some View {
+        let items = freeFirePatches.filter { $0.category == category }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(category.rawValue.uppercased())
+                    .font(.system(size: 18, weight: .bold))
+                    .tracking(0.6)
+                    .foregroundStyle(AppTheme.primaryText)
+                Spacer()
+                Text("\(items.count)")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(AppTheme.secondaryText)
+            }
+            if items.isEmpty {
+                Text("Nenhum patch disponível")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(AppTheme.secondaryText)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(items) { item in
+                    functionRow(item: item)
+                }
+            }
+        }
     }
 
     private func functionRow(item: PatchLibraryItem) -> some View {
         let active = enabledPatchIDs.contains(item.id)
         let title = item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent
         return HStack(spacing: 12) {
+            Image(systemName: item.category.symbol)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(AppTheme.accentBright)
+                .shadow(color: AppTheme.accent.opacity(0.55), radius: 7)
+                .frame(width: 28)
+                .accessibilityHidden(true)
+
             VStack(alignment: .leading, spacing: 5) {
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
+                Text(title.uppercased())
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .tracking(0.25)
+                    .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(2)
                 Text(active ? "Patch ativo · backup protegido" : "Substituição autorizada")
                     .font(.system(size: 11, weight: .medium))
@@ -512,18 +546,19 @@ private struct CHZPrivHomeView: View {
                 .toggleStyle(CHZSwitchStyle())
                 .disabled(item.project == nil || isWorking)
         }
-        .padding(.horizontal, 13)
-        .frame(minHeight: 70)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.horizontal, 14)
+        .frame(minHeight: 68)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
+        .background(AppTheme.cardBackground.opacity(0.74), in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 0.7)
+            RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous)
+                .stroke(Color.white.opacity(0.14), lineWidth: 0.7)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(AppTheme.accent.opacity(0.42), lineWidth: 0.55)
+            RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous)
+                .stroke(AppTheme.accent.opacity(0.46), lineWidth: 0.65)
         }
+        .shadow(color: AppTheme.accent.opacity(0.18), radius: 14, y: 7)
         .overlay(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(LinearGradient(
@@ -534,26 +569,6 @@ private struct CHZPrivHomeView: View {
                 .frame(height: 28)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .allowsHitTesting(false)
-        }
-    }
-
-    private var visiblePatches: [PatchLibraryItem] {
-        freeFirePatches.filter { item in
-            let packageFilename = item.packageURL.deletingPathExtension().lastPathComponent
-            let searchableName = [item.project?.name, packageFilename]
-                .compactMap { $0 }
-                .joined(separator: " ")
-                .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            let isAntenna = searchableName.contains("antena")
-            let isHologram = searchableName.contains("holograma") || searchableName.contains("holo") || searchableName.contains("chams")
-            switch selectedGame {
-            case .hs:
-                return !isAntenna && !isHologram
-            case .hsAntena:
-                return isAntenna
-            case .hologramas:
-                return isHologram
-            }
         }
     }
 
@@ -647,7 +662,7 @@ private struct CHZPrivHomeView: View {
             HStack(spacing: 10) {
                 ZStack {
                     Circle()
-                        .fill(AppTheme.accent.opacity(0.16))
+                        .fill(AppTheme.accent.opacity(0.13))
                     Image(systemName: "waveform.path.ecg")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(AppTheme.accentBright)
