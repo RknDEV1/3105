@@ -1,10 +1,58 @@
 [
-  {"id": 1, "category": "Avatar", "file": "HS ALTO - ANTENA.3105", "path": "Avatar/HS ALTO - ANTENA.3105", "sha256": "4487ec07d05fb33dc22ae7fc2f0c2c5f4b2e0914bdb8682511dc7b75d1cd4787"},
-  {"id": 2, "category": "Avatar", "file": "HS ALTO.3105", "path": "Avatar/HS ALTO.3105", "sha256": "ede656ab829eeace725f52041c18d3b656076e1b5d54519b46fee3309d5a17d4"},
-  {"id": 3, "category": "Avatar", "file": "HS PESCO-ALTO.3105", "path": "Avatar/HS PESCO-ALTO.3105", "sha256": "9e3aac6366023d2d22848971f4959fcc484e16a70c9d33c300073f21a85b0d5e"},
-  {"id": 4, "category": "Avatar", "file": "HS PESCOÇO - ANTENA.3105", "path": "Avatar/HS PESCOÇO - ANTENA.3105", "sha256": "e8af16284d43348bf770a84c7d307cc9d615ebc2017896fe66f8d4bedb4ca222"},
-  {"id": 5, "category": "Avatar", "file": "HS PESCOÇO.3105", "path": "Avatar/HS PESCOÇO.3105", "sha256": "8dda481f5022ffdba8eb49f30c91596f0ff7c619e1c327669fcfcc50c6cbc125"},
-  {"id": 6, "category": "Cache", "file": "HS 100- BAYPSS.3105", "path": "Cache/HS 100- BAYPSS.3105", "sha256": "d8a14d94a21a00e381d0a7c981866b07e6b47c160b51e4054ff73a72f9318fea"},
-  {"id": 7, "category": "Cache", "file": "HS PEITO-PESCOÇO.3105", "path": "Cache/HS PEITO-PESCOÇO.3105", "sha256": "6f23951ccc1d79e5c319f669fdec1e4cabe154adbc211099f6d30643b9a9e413"},
-  {"id": 8, "category": "Cache", "file": "PESCOÇO BAYPS.3105", "path": "Cache/PESCOÇO BAYPS.3105", "sha256": "6e86c459ddf63ebbd4d09baf3fa1f34ee8af88be99a7115176546d590e082d00"}
+  {
+    "id": 1,
+    "category": "Avatar",
+    "file": "HS ALTO - ANTENA.3105",
+    "path": "Avatar/HS ALTO - ANTENA.3105",
+    "sha256": "4487ec07d05fb33dc22ae7fc2f0c2c5f4b2e0914bdb8682511dc7b75d1cd4787"
+  },
+  {
+    "id": 2,
+    "category": "Avatar",
+    "file": "HS ALTO.3105",
+    "path": "Avatar/HS ALTO.3105",
+    "sha256": "ede656ab829eeace725f52041c18d3b656076e1b5d54519b46fee3309d5a17d4"
+  },
+  {
+    "id": 3,
+    "category": "Avatar",
+    "file": "HS PESCO-ALTO.3105",
+    "path": "Avatar/HS PESCO-ALTO.3105",
+    "sha256": "9e3aac6366023d2d22848971f4959fcc484e16a70c9d33c300073f21a85b0d5e"
+  },
+  {
+    "id": 4,
+    "category": "Avatar",
+    "file": "HS PESCOÇO - ANTENA.3105",
+    "path": "Avatar/HS PESCOÇO - ANTENA.3105",
+    "sha256": "e8af16284d43348bf770a84c7d307cc9d615ebc2017896fe66f8d4bedb4ca222"
+  },
+  {
+    "id": 5,
+    "category": "Avatar",
+    "file": "HS PESCOÇO.3105",
+    "path": "Avatar/HS PESCOÇO.3105",
+    "sha256": "8dda481f5022ffdba8eb49f30c91596f0ff7c619e1c327669fcfcc50c6cbc125"
+  },
+  {
+    "id": 6,
+    "category": "Cache",
+    "file": "HS 100- BAYPSS.3105",
+    "path": "Cache/HS 100- BAYPSS.3105",
+    "sha256": "d8a14d94a21a00e381d0a7c981866b07e6b47c160b51e4054ff73a72f9318fea"
+  },
+  {
+    "id": 7,
+    "category": "Cache",
+    "file": "HS PEITO-PESCOÇO.3105",
+    "path": "Cache/HS PEITO-PESCOÇO.3105",
+    "sha256": "6f23951ccc1d79e5c319f669fdec1e4cabe154adbc211099f6d30643b9a9e413"
+  },
+  {
+    "id": 8,
+    "category": "Cache",
+    "file": "PESCOÇO BAYPS.3105",
+    "path": "Cache/PESCOÇO BAYPS.3105",
+    "sha256": "6e86c459ddf63ebbd4d09baf3fa1f34ee8af88be99a7115176546d590e082d00"
+  }
 ]

@@ -115,7 +115,19 @@ enum PatchProjectLibrary {
         bundle: Bundle = .main,
         fileManager: FileManager = .default
     ) {
-        let urls = bundle.urls(forResourcesWithExtension: "3105", subdirectory: nil) ?? []
+        var discoveredURLs = bundle.urls(forResourcesWithExtension: "3105", subdirectory: nil) ?? []
+        for category in PatchCategory.allCases {
+            discoveredURLs += bundle.urls(
+                forResourcesWithExtension: "3105",
+                subdirectory: category.rawValue
+            ) ?? []
+        }
+        var uniqueURLs: [URL] = []
+        var seenPaths = Set<String>()
+        for url in discoveredURLs where seenPaths.insert(url.path).inserted {
+            uniqueURLs.append(url)
+        }
+        let urls = uniqueURLs
         guard !urls.isEmpty else {
             log("patch: no bundled original Free Fire packages found")
             return
@@ -123,8 +135,10 @@ enum PatchProjectLibrary {
 
         do {
             let root = try packageRootURL(fileManager: fileManager)
+            let manifestCategories = bundledManifestCategories(bundle: bundle)
             for source in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-                let category = PatchCategory.from(packageURL: source)
+                let category = manifestCategories[source.lastPathComponent]
+                    ?? PatchCategory.from(packageURL: source)
                 let categoryRoot = root.appendingPathComponent(category.rawValue, isDirectory: true)
                 try fileManager.createDirectory(at: categoryRoot, withIntermediateDirectories: true)
                 let destination = categoryRoot.appendingPathComponent(source.lastPathComponent)
@@ -143,6 +157,23 @@ enum PatchProjectLibrary {
         } catch {
             log("patch: unable to import bundled original Free Fire packages")
         }
+    }
+
+    private static func bundledManifestCategories(bundle: Bundle) -> [String: PatchCategory] {
+        guard let manifestURL = bundle.url(forResource: "manifest", withExtension: "json"),
+              let data = try? Data(contentsOf: manifestURL),
+              let entries = try? JSONDecoder().decode([BundledManifestEntry].self, from: data) else {
+            return [:]
+        }
+        return Dictionary(uniqueKeysWithValues: entries.compactMap { entry in
+            guard let category = PatchCategory(rawValue: entry.category) else { return nil }
+            return (entry.file, category)
+        })
+    }
+
+    private struct BundledManifestEntry: Decodable {
+        let category: String
+        let file: String
     }
 
     private static func decryptBundledPatch(_ encrypted: Data) throws -> Data {
