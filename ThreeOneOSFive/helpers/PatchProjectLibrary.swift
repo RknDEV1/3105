@@ -2,6 +2,24 @@ import Foundation
 
 import CryptoKit
 
+enum PatchCategory: String, CaseIterable, Identifiable {
+    case avatar = "Avatar"
+    case cache = "Cache"
+
+    var id: String { rawValue }
+
+    var symbol: String {
+        switch self {
+        case .avatar: return "scope"
+        case .cache: return "antenna.radiowaves.left.and.right"
+        }
+    }
+
+    static func from(packageURL: URL) -> PatchCategory {
+        PatchCategory(rawValue: packageURL.deletingLastPathComponent().lastPathComponent) ?? .avatar
+    }
+}
+
 struct PatchLibraryItem: Identifiable {
     let summary: PatchPackageSummary
     var project: PatchProject?
@@ -10,6 +28,7 @@ struct PatchLibraryItem: Identifiable {
 
     var id: UUID { summary.packageID }
     var isLocked: Bool { project == nil }
+    var category: PatchCategory { PatchCategory.from(packageURL: packageURL) }
     var workspaceURL: URL? {
         PatchWorkspaceService.workspaceURL(projectID: id)
     }
@@ -105,7 +124,10 @@ enum PatchProjectLibrary {
         do {
             let root = try packageRootURL(fileManager: fileManager)
             for source in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-                let destination = root.appendingPathComponent(source.lastPathComponent)
+                let category = PatchCategory.from(packageURL: source)
+                let categoryRoot = root.appendingPathComponent(category.rawValue, isDirectory: true)
+                try fileManager.createDirectory(at: categoryRoot, withIntermediateDirectories: true)
+                let destination = categoryRoot.appendingPathComponent(source.lastPathComponent)
                 let sourceData = try Data(contentsOf: source, options: .mappedIfSafe)
                 let needsCopy: Bool
                 if fileManager.fileExists(atPath: destination.path) {
@@ -140,12 +162,13 @@ enum PatchProjectLibrary {
 
     static func load(fileManager: FileManager = .default) -> [PatchLibraryItem] {
         guard let root = try? packageRootURL(fileManager: fileManager),
-              let urls = try? fileManager.contentsOfDirectory(
+              let enumerator = fileManager.enumerator(
                 at: root,
                 includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey],
-                options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
+                options: [.skipsHiddenFiles]
               ) else { return [] }
 
+        let urls = enumerator.compactMap { $0 as? URL }
         var byID: [UUID: PatchLibraryItem] = [:]
         for url in urls where url.pathExtension.lowercased() == "3105" {
             do {
