@@ -232,7 +232,6 @@ private struct FreeFireSelectionView: View {
         supported: Bool
     ) -> some View {
         Button {
-            SoundEffectManager.shared.play(.tap)
             onContinue(edition)
         } label: {
             HStack(spacing: 15) {

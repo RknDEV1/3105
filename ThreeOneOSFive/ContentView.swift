@@ -401,7 +401,6 @@ private struct CHZPrivHomeView: View {
 
     private func bottomNavigationItem(_ page: HomePage, title: String, symbol: String) -> some View {
         Button {
-            SoundEffectManager.shared.play(.tab)
             withAnimation(.easeInOut(duration: 0.22)) {
                 selectedPage = page
             }
@@ -594,14 +593,12 @@ private struct CHZPrivHomeView: View {
         isWorking = true
 
         if isEnabled {
-            SoundEffectManager.shared.play(.patchStart)
             activityLog.removeAll(keepingCapacity: true)
             appendLog("Nova sessão iniciada — \(patchName)", level: .info)
             appendLog("Validando configuração do patch", level: .progress)
             appendLog("Criando backup do arquivo original", level: .progress)
             applyPatch(item: item, baseProject: baseProject, patchName: patchName)
         } else {
-            SoundEffectManager.shared.play(.patchStart)
             activityLog.removeAll(keepingCapacity: true)
             appendLog("Sessão de restauração — \(patchName)", level: .info)
             appendLog("Verificando journal e backup protegido", level: .progress)
@@ -619,13 +616,12 @@ private struct CHZPrivHomeView: View {
                 await MainActor.run {
                     enabledPatchIDs.insert(item.id)
                     isWorking = false
-                    SoundEffectManager.shared.play(.success)
+                    SoundEffectManager.shared.play(.confirmation)
                     appendLog("Patch aplicado e verificado", level: .success)
                 }
             } catch {
                 await MainActor.run {
                     isWorking = false
-                    SoundEffectManager.shared.play(.failure)
                     appendLog("Falha ao ativar: \(error.localizedDescription)", level: .warning)
                 }
             }
@@ -645,13 +641,12 @@ private struct CHZPrivHomeView: View {
                 await MainActor.run {
                     enabledPatchIDs.remove(item.id)
                     isWorking = false
-                    SoundEffectManager.shared.play(.success)
+                    SoundEffectManager.shared.play(.confirmation)
                     appendLog("Arquivo original restaurado", level: .success)
                 }
             } catch {
                 await MainActor.run {
                     isWorking = false
-                    SoundEffectManager.shared.play(.failure)
                     appendLog("Falha ao restaurar: \(error.localizedDescription)", level: .warning)
                 }
             }
