@@ -171,7 +171,7 @@ private struct FreeFireSelectionView: View {
                             .tracking(0.8)
                             .foregroundStyle(AppTheme.success)
                         Spacer()
-                        Text("3105 PRIV")
+                        Text("CHZ PRIV")
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .foregroundStyle(AppTheme.tertiaryText)
                     }

@@ -349,6 +349,7 @@ private struct CHZPrivHomeView: View {
     @State private var freeFirePatches: [PatchLibraryItem] = []
     @State private var enabledPatchIDs = Set<UUID>()
     @State private var isWorking = false
+    @State private var patchActivity: [UUID: String] = [:]
     @State private var activityLog = [LogEntry(
         timestamp: Date().formatted(date: .omitted, time: .shortened),
         message: "Sistema pronto — aguardando patches",
@@ -365,7 +366,6 @@ private struct CHZPrivHomeView: View {
                         ScrollView {
                             VStack(spacing: 13) {
                                 logo
-                                activityLogView
                                 functions
                                 backupStatus
                             }
@@ -519,10 +519,10 @@ private struct CHZPrivHomeView: View {
                     .tracking(0.25)
                     .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(2)
-                Text(active ? "Patch ativo · backup protegido" : "Substituição autorizada")
-                    .font(.system(size: 12, weight: .semibold))
+                Text(patchActivity[item.id] ?? (active ? "PATCH ATIVO · BACKUP PROTEGIDO" : "PRONTO PARA ATIVAÇÃO"))
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(active ? AppTheme.success : AppTheme.secondaryText)
-                    .lineLimit(1)
+                    .lineLimit(2)
                 Text(patchDescription(for: item))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(AppTheme.tertiaryText)
@@ -588,7 +588,7 @@ private struct CHZPrivHomeView: View {
         if filename.contains("PESCO") {
             return "Hs apenas no pescoço do inimigo"
         }
-        return "Substituição autorizada"
+        return "PRONTO PARA ATIVAÇÃO"
     }
 
     private func reloadFreeFirePatches() {
@@ -610,12 +610,14 @@ private struct CHZPrivHomeView: View {
         isWorking = true
 
         if isEnabled {
+            patchActivity[item.id] = "VALIDANDO CONFIGURAÇÃO · BACKUP EM PREPARO"
             activityLog.removeAll(keepingCapacity: true)
             appendLog("Nova sessão iniciada — \(patchName)", level: .info)
             appendLog("Validando configuração do patch", level: .progress)
             appendLog("Criando backup do arquivo original", level: .progress)
             applyPatch(item: item, baseProject: baseProject, patchName: patchName)
         } else {
+            patchActivity[item.id] = "RESTAURANDO ARQUIVO ORIGINAL"
             activityLog.removeAll(keepingCapacity: true)
             appendLog("Sessão de restauração — \(patchName)", level: .info)
             appendLog("Verificando journal e backup protegido", level: .progress)
@@ -632,11 +634,13 @@ private struct CHZPrivHomeView: View {
                 _ = try DevicePatchService.apply(project: project)
                 await MainActor.run {
                     enabledPatchIDs.insert(item.id)
+                    patchActivity[item.id] = "PATCH ATIVO · APLICAÇÃO VERIFICADA"
                     isWorking = false
                     appendLog("Patch aplicado e verificado", level: .success)
                 }
             } catch {
                 await MainActor.run {
+                    patchActivity[item.id] = "FALHA AO ATIVAR · TENTE NOVAMENTE"
                     isWorking = false
                     appendLog("Falha ao ativar: \(error.localizedDescription)", level: .warning)
                 }
@@ -656,11 +660,13 @@ private struct CHZPrivHomeView: View {
                 try DevicePatchService.restore(receipt: receipt)
                 await MainActor.run {
                     enabledPatchIDs.remove(item.id)
+                    patchActivity[item.id] = "PRONTO PARA ATIVAÇÃO · ORIGINAL RESTAURADO"
                     isWorking = false
                     appendLog("Arquivo original restaurado", level: .success)
                 }
             } catch {
                 await MainActor.run {
+                    patchActivity[item.id] = "FALHA AO RESTAURAR · BACKUP PRESERVADO"
                     isWorking = false
                     appendLog("Falha ao restaurar: \(error.localizedDescription)", level: .warning)
                 }
