@@ -126,108 +126,158 @@ private struct FreeFireSelectionView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            AppTheme.pageBackground.ignoresSafeArea()
+
+            LinearGradient(
+                colors: [AppTheme.accent.opacity(0.20), .clear, Color.black],
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+            .ignoresSafeArea()
 
             Circle()
-                .fill(Color.red.opacity(0.16))
-                .frame(width: 280, height: 280)
-                .blur(radius: 80)
-                .offset(x: 120, y: -230)
+                .fill(AppTheme.accent.opacity(0.16))
+                .frame(width: 320, height: 320)
+                .blur(radius: 100)
+                .offset(x: 145, y: -285)
 
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 18) {
-                    Spacer(minLength: 22)
-
-                VStack(spacing: 5) {
-                    Text("CHZ")
-                        .font(.custom("BurbankBigCondensed-Black", size: 34))
-                        .italic()
-                        .foregroundStyle(AppTheme.accent)
-                        .shadow(color: AppTheme.accent.opacity(0.88), radius: 1.15)
-                        .shadow(color: AppTheme.accent.opacity(0.42), radius: 0.35)
-                    Text("PRIV")
-                        .font(.custom("BurbankBigCondensed-Black", size: 32))
-                        .italic()
-                        .foregroundStyle(.white)
-                        .shadow(color: .white.opacity(0.68), radius: 1.05)
-                        .shadow(color: .white.opacity(0.28), radius: 0.35)
-                }
-
-                Button(action: { onContinue(.freeFire) }) {
-                    VStack(spacing: 12) {
-                        Image("FreeFire")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: artworkSide, height: artworkSide)
-                            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                            }
-                            .shadow(color: AppTheme.accent.opacity(0.30), radius: 16, y: 7)
-
-                        Text("Free Fire")
-                            .font(.custom("BurbankBigCondensed-Black", size: 26))
-                            .italic()
-                            .foregroundStyle(.white)
-                            .shadow(color: .white.opacity(0.62), radius: 1.0)
-                            .shadow(color: .white.opacity(0.24), radius: 0.35)
-
-                        Text("Toque para continuar")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color.white.opacity(0.62))
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("CHZ PRIV / GAME SELECT")
+                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .tracking(1.2)
+                                .foregroundStyle(AppTheme.accentBright)
+                            Text("Escolha seu ambiente")
+                                .font(.system(size: 27, weight: .black, design: .rounded))
+                                .foregroundStyle(.white)
+                            Text("Selecione uma edição para continuar")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(AppTheme.secondaryText)
+                        }
+                        Spacer()
+                        CHZPrivWordmark(size: 31)
                     }
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity)
-                    .background(.ultraThinMaterial.opacity(0.82), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .padding(.top, 22)
+
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(AppTheme.success)
+                            .frame(width: 8, height: 8)
+                            .shadow(color: AppTheme.success.opacity(0.8), radius: 5)
+                        Text("SISTEMA ONLINE")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .tracking(0.8)
+                            .foregroundStyle(AppTheme.success)
+                        Spacer()
+                        Text("3105 PRIV")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundStyle(AppTheme.tertiaryText)
+                    }
+                    .padding(.horizontal, 13)
+                    .frame(height: 34)
+                    .background(AppTheme.success.opacity(0.07), in: Capsule(style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
+                        Capsule(style: .continuous)
+                            .stroke(AppTheme.success.opacity(0.25), lineWidth: 0.7)
                     }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Free Fire, tocar para acessar")
 
-                Button(action: { onContinue(.freeFireMax) }) {
-                    VStack(spacing: 12) {
-                        Image("FreeFireMax")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: artworkSide, height: artworkSide)
-                            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
-                            }
-                            .opacity(0.72)
+                    Text("EDIÇÕES DISPONÍVEIS")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .tracking(1.0)
+                        .foregroundStyle(AppTheme.secondaryText)
+                        .padding(.top, 8)
 
-                        Text("Free Fire Max")
-                            .font(.custom("BurbankBigCondensed-Black", size: 25))
-                            .italic()
-                            .foregroundStyle(.white)
-                            .shadow(color: .white.opacity(0.58), radius: 1.0)
-                            .shadow(color: .white.opacity(0.22), radius: 0.35)
+                    gameCard(
+                        title: "Free Fire",
+                        subtitle: "Edição principal",
+                        status: "SUPORTE ATIVO",
+                        artwork: "FreeFire",
+                        edition: .freeFire,
+                        supported: true
+                    )
 
-                        Text("Suporte em breve…")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color.white.opacity(0.58))
+                    gameCard(
+                        title: "Free Fire Max",
+                        subtitle: "Edição expandida",
+                        status: "EM DESENVOLVIMENTO",
+                        artwork: "FreeFireMax",
+                        edition: .freeFireMax,
+                        supported: false
+                    )
+
+                    HStack(spacing: 8) {
+                        Image(systemName: "lock.shield.fill")
+                            .foregroundStyle(AppTheme.accentBright)
+                        Text("Acesso autorizado · Ambiente protegido")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(AppTheme.secondaryText)
                     }
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity)
-                    .background(.ultraThinMaterial.opacity(0.64), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
-                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 9)
+                    .padding(.bottom, 22)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Free Fire Max, tocar para acessar")
-
-                    Spacer(minLength: 22)
-                }
-                .padding(.horizontal, 22)
+                .padding(.horizontal, 18)
             }
         }
+    }
+
+    private func gameCard(
+        title: String,
+        subtitle: String,
+        status: String,
+        artwork: String,
+        edition: GameEdition,
+        supported: Bool
+    ) -> some View {
+        Button {
+            onContinue(edition)
+        } label: {
+            HStack(spacing: 15) {
+                Image(artwork)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 92, height: 92)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(supported ? AppTheme.accentBright.opacity(0.70) : Color.white.opacity(0.18), lineWidth: 1)
+                    }
+                    .opacity(supported ? 1 : 0.60)
+                    .shadow(color: supported ? AppTheme.accent.opacity(0.35) : .clear, radius: 14, y: 6)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.custom(AppTheme.brandFontName, size: 25))
+                        .fontWeight(.black)
+                        .italic()
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(AppTheme.secondaryText)
+                    Text(status)
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .tracking(0.65)
+                        .foregroundStyle(supported ? AppTheme.success : AppTheme.accentBright)
+                }
+                Spacer(minLength: 4)
+                Image(systemName: supported ? "arrow.right.circle.fill" : "clock.badge.exclamationmark")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(supported ? AppTheme.accentBright : AppTheme.secondaryText)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 122)
+            .background(.ultraThinMaterial.opacity(supported ? 0.84 : 0.56), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background((supported ? AppTheme.accent : Color.white).opacity(supported ? 0.08 : 0.035), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(supported ? AppTheme.accent.opacity(0.46) : Color.white.opacity(0.13), lineWidth: 0.8)
+            }
+            .shadow(color: supported ? AppTheme.accent.opacity(0.18) : .clear, radius: 16, y: 8)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(status)")
     }
 }
 

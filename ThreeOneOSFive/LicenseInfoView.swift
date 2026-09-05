@@ -38,15 +38,12 @@ struct LicenseInfoView: View {
     private var pageHeader: some View {
         HStack(spacing: 12) {
             AppLogo(size: 42)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
+                CHZPrivWordmark(size: 24)
                 Text("INFORMAÇÕES DA LICENÇA")
                     .font(.system(size: 17, weight: .bold, design: .rounded))
                     .tracking(0.45)
                     .foregroundStyle(AppTheme.primaryText)
-                Text("CHZ PRIV · STATUS DO SISTEMA")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .tracking(0.5)
-                    .foregroundStyle(AppTheme.secondaryText)
             }
             Spacer()
         }

@@ -450,26 +450,13 @@ private struct CHZPrivHomeView: View {
     }
 
     private var logo: some View {
-        VStack(spacing: -2) {
-                Text("CHZ")
-                    .font(.custom("BurbankBigCondensed-Black", size: 34))
-                .italic()
-                .foregroundStyle(AppTheme.accent)
-                .shadow(color: AppTheme.accent.opacity(0.88), radius: 1.15)
-                .shadow(color: AppTheme.accent.opacity(0.42), radius: 0.35)
-            Text("PRIV")
-                .font(.custom("BurbankBigCondensed-Black", size: 32))
-                .italic()
-                .foregroundStyle(.white)
-                .shadow(color: .white.opacity(0.68), radius: 1.05)
-                .shadow(color: .white.opacity(0.28), radius: 0.35)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 6)
+        CHZPrivWordmark(size: 40)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 6)
     }
 
     private var functions: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 15) {
             if isFreeFireMax {
                 Text("Suporte em breve…")
                     .font(.system(size: 16, weight: .semibold))
@@ -491,20 +478,20 @@ private struct CHZPrivHomeView: View {
     @ViewBuilder
     private func categorySection(_ category: PatchCategory) -> some View {
         let items = freeFirePatches.filter { $0.category == category }
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(category.rawValue.uppercased())
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 20, weight: .bold))
                     .tracking(0.6)
                     .foregroundStyle(AppTheme.primaryText)
                 Spacer()
                 Text("\(items.count)")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(AppTheme.secondaryText)
             }
             if items.isEmpty {
                 Text("Nenhum patch disponível")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(AppTheme.secondaryText)
                     .padding(.vertical, 8)
             } else {
@@ -528,14 +515,18 @@ private struct CHZPrivHomeView: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(title.uppercased())
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
                     .tracking(0.25)
                     .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(2)
                 Text(active ? "Patch ativo · backup protegido" : "Substituição autorizada")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(active ? AppTheme.success : AppTheme.secondaryText)
                     .lineLimit(1)
+                Text(patchDescription(for: item))
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(AppTheme.tertiaryText)
+                    .lineLimit(2)
             }
             Spacer(minLength: 6)
             Toggle("\(title)", isOn: Binding(
@@ -547,7 +538,7 @@ private struct CHZPrivHomeView: View {
                 .disabled(item.project == nil || isWorking)
         }
         .padding(.horizontal, 14)
-        .frame(minHeight: 68)
+        .frame(minHeight: 76)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
         .background(AppTheme.cardBackground.opacity(0.74), in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
         .overlay {
@@ -558,7 +549,7 @@ private struct CHZPrivHomeView: View {
             RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous)
                 .stroke(AppTheme.accent.opacity(0.46), lineWidth: 0.65)
         }
-        .shadow(color: AppTheme.accent.opacity(0.18), radius: 14, y: 7)
+        .shadow(color: AppTheme.accent.opacity(0.16), radius: 10, y: 5)
         .overlay(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(LinearGradient(
@@ -570,6 +561,34 @@ private struct CHZPrivHomeView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .allowsHitTesting(false)
         }
+    }
+
+    private func patchDescription(for item: PatchLibraryItem) -> String {
+        let filename = item.packageURL.deletingPathExtension().lastPathComponent
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .uppercased()
+            .replacingOccurrences(of: "-", with: " ")
+            .replacingOccurrences(of: "+", with: " ")
+
+        if filename.contains("100") && filename.contains("BAYPSS") {
+            return "Hs no peito do inimigo"
+        }
+        if filename.contains("PEITO") && filename.contains("PESCO") {
+            return "Hs no pescoço e peito do inimigo"
+        }
+        if filename.contains("PESCO") && filename.contains("ALTO") {
+            return "Hs no pescoço e acima do inimigo"
+        }
+        if filename.contains("ALTO") && filename.contains("ANTENA") {
+            return "Hs acima da cabeça do inimigo"
+        }
+        if filename.contains("ALTO") {
+            return "Hs acima da cabeça do inimigo"
+        }
+        if filename.contains("PESCO") {
+            return "Hs apenas no pescoço do inimigo"
+        }
+        return "Substituição autorizada"
     }
 
     private func reloadFreeFirePatches() {
@@ -658,7 +677,7 @@ private struct CHZPrivHomeView: View {
     }
 
     private var activityLogView: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 ZStack {
                     Circle()
@@ -667,14 +686,15 @@ private struct CHZPrivHomeView: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(AppTheme.accentBright)
                 }
-                .frame(width: 30, height: 30)
+                .frame(width: 34, height: 34)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Log de atividade")
-                        .font(.system(size: 15, weight: .heavy))
+                    Text("LOG DE ATIVIDADE")
+                        .font(.system(size: 17, weight: .black, design: .rounded))
+                        .tracking(0.45)
                         .foregroundStyle(.white)
                     Text("Sessão atual · \(enabledPatchIDs.count) ativo(s)")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(AppTheme.secondaryText)
                 }
                 Spacer()
@@ -686,20 +706,21 @@ private struct CHZPrivHomeView: View {
 
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 9) {
+                    LazyVStack(alignment: .leading, spacing: 6) {
                         ForEach(activityLog) { entry in
                             HStack(alignment: .top, spacing: 8) {
                                 Image(systemName: entry.level.symbol)
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: 14, weight: .bold))
                                     .foregroundStyle(entry.level.tint)
                                     .frame(width: 16)
                                     .padding(.top, 1)
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(entry.message)
-                                        .font(.system(size: 11, weight: .medium))
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .lineLimit(2)
                                         .foregroundStyle(entry.level == .warning ? Color.orange : .white.opacity(0.88))
                                     Text(entry.timestamp)
-                                        .font(.system(size: 9, weight: .regular, design: .monospaced))
+                                        .font(.system(size: 10, weight: .medium, design: .monospaced))
                                         .foregroundStyle(AppTheme.tertiaryText)
                                 }
                                 Spacer(minLength: 0)
@@ -708,7 +729,7 @@ private struct CHZPrivHomeView: View {
                         }
                     }
                 }
-                .frame(maxHeight: 128)
+                .frame(maxHeight: 158)
                 .onChange(of: activityLog.count) { _ in
                     if let last = activityLog.last {
                         withAnimation(.easeOut(duration: 0.2)) {
@@ -718,7 +739,7 @@ private struct CHZPrivHomeView: View {
                 }
             }
         }
-        .padding(13)
+        .padding(15)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .background(Color.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay {

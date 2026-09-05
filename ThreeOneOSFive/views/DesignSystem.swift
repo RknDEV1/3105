@@ -26,6 +26,32 @@ enum AppTheme {
     static let contentCardCornerRadius: CGFloat = 18
     static let contentCardInset: CGFloat = 16
     static let contentCardPadding: CGFloat = 16
+    static let brandFontName = "BurbankBigCondensed-Black"
+}
+
+struct CHZPrivWordmark: View {
+    var size: CGFloat = 34
+
+    var body: some View {
+        VStack(spacing: -size * 0.08) {
+            Text("CHZ")
+                .font(.custom(AppTheme.brandFontName, size: size))
+                .fontWeight(.black)
+                .italic()
+                .foregroundStyle(AppTheme.accent)
+                .shadow(color: AppTheme.accent.opacity(0.90), radius: 1.5)
+                .shadow(color: AppTheme.accent.opacity(0.45), radius: 0.45)
+            Text("PRIV")
+                .font(.custom(AppTheme.brandFontName, size: size * 0.94))
+                .fontWeight(.black)
+                .italic()
+                .foregroundStyle(.white)
+                .shadow(color: .white.opacity(0.72), radius: 1.2)
+                .shadow(color: .white.opacity(0.30), radius: 0.45)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("CHZ PRIV")
+    }
 }
 
 struct AppCardBorder: View {
