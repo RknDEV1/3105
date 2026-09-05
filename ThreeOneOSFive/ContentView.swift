@@ -347,8 +347,8 @@ private struct CHZPrivHomeView: View {
                         ScrollView {
                             VStack(spacing: 13) {
                                 logo
-                                functions
                                 activityLogView
+                                functions
                                 backupStatus
                             }
                             .padding(.horizontal, 16)
