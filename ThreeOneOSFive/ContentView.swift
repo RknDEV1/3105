@@ -35,31 +35,13 @@ struct ContentView: View {
     }
 
     var body: some View {
-        Group {
-            if horizontalSizeClass == .regular {
-                regularLayout
-            } else {
-                compactLayout
-            }
-        }
+        CHZPrivHomeView(
+            isFreeFireMax: isFreeFireMax,
+            onExitToGamePicker: onExitToGamePicker
+        )
         .appTheme()
         .imageScale(.small)
         .dynamicTypeSize(.small)
-        .onChange(of: patchDraftCoordinator.request?.id) { requestID in
-            if requestID != nil { tabNavigation.select(AppSection.patches.rawValue) }
-        }
-        .onChange(of: patchDraftCoordinator.importRequest?.id) { requestID in
-            if requestID != nil { tabNavigation.select(AppSection.patches.rawValue) }
-        }
-        .onChange(of: cleanerEnabled) { _ in
-            tabNavigation.reconcileSelection(with: featureVisibility)
-        }
-        .onChange(of: wallpapersEnabled) { _ in
-            tabNavigation.reconcileSelection(with: featureVisibility)
-        }
-        .onAppear {
-            tabNavigation.reconcileSelection(with: featureVisibility)
-        }
     }
 
     private var compactLayout: some View {
@@ -349,7 +331,6 @@ private struct CHZPrivHomeView: View {
     @State private var freeFirePatches: [PatchLibraryItem] = []
     @State private var enabledPatchIDs = Set<UUID>()
     @State private var isWorking = false
-    @State private var patchActivity: [UUID: String] = [:]
     @State private var activityLog = [LogEntry(
         timestamp: Date().formatted(date: .omitted, time: .shortened),
         message: "Sistema pronto — aguardando patches",
@@ -367,6 +348,7 @@ private struct CHZPrivHomeView: View {
                             VStack(spacing: 13) {
                                 logo
                                 functions
+                                activityLogView
                                 backupStatus
                             }
                             .padding(.horizontal, 16)
@@ -503,11 +485,10 @@ private struct CHZPrivHomeView: View {
     }
 
     private func functionRow(item: PatchLibraryItem) -> some View {
-        let active = enabledPatchIDs.contains(item.id)
         let title = item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent
         return HStack(spacing: 12) {
-            Image(systemName: item.category.symbol)
-                .font(.system(size: 20, weight: .medium))
+                Image(systemName: item.category.symbol)
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(AppTheme.accentBright)
                 .shadow(color: AppTheme.accent.opacity(0.55), radius: 7)
                 .frame(width: 28)
@@ -515,16 +496,12 @@ private struct CHZPrivHomeView: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(title.uppercased())
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
                     .tracking(0.25)
                     .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(2)
-                Text(patchActivity[item.id] ?? (active ? "PATCH ATIVO · BACKUP PROTEGIDO" : "PRONTO PARA ATIVAÇÃO"))
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(active ? AppTheme.success : AppTheme.secondaryText)
-                    .lineLimit(2)
                 Text(patchDescription(for: item))
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundStyle(AppTheme.tertiaryText)
                     .lineLimit(2)
             }
@@ -537,8 +514,8 @@ private struct CHZPrivHomeView: View {
                 .toggleStyle(CHZSwitchStyle())
                 .disabled(item.project == nil || isWorking)
         }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 76)
+        .padding(.horizontal, 11)
+        .frame(minHeight: 62)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
         .background(AppTheme.cardBackground.opacity(0.74), in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
         .overlay {
@@ -588,7 +565,7 @@ private struct CHZPrivHomeView: View {
         if filename.contains("PESCO") {
             return "Hs apenas no pescoço do inimigo"
         }
-        return "PRONTO PARA ATIVAÇÃO"
+        return ""
     }
 
     private func reloadFreeFirePatches() {
@@ -610,14 +587,12 @@ private struct CHZPrivHomeView: View {
         isWorking = true
 
         if isEnabled {
-            patchActivity[item.id] = "VALIDANDO CONFIGURAÇÃO · BACKUP EM PREPARO"
             activityLog.removeAll(keepingCapacity: true)
             appendLog("Nova sessão iniciada — \(patchName)", level: .info)
             appendLog("Validando configuração do patch", level: .progress)
             appendLog("Criando backup do arquivo original", level: .progress)
             applyPatch(item: item, baseProject: baseProject, patchName: patchName)
         } else {
-            patchActivity[item.id] = "RESTAURANDO ARQUIVO ORIGINAL"
             activityLog.removeAll(keepingCapacity: true)
             appendLog("Sessão de restauração — \(patchName)", level: .info)
             appendLog("Verificando journal e backup protegido", level: .progress)
@@ -634,13 +609,11 @@ private struct CHZPrivHomeView: View {
                 _ = try DevicePatchService.apply(project: project)
                 await MainActor.run {
                     enabledPatchIDs.insert(item.id)
-                    patchActivity[item.id] = "PATCH ATIVO · APLICAÇÃO VERIFICADA"
                     isWorking = false
                     appendLog("Patch aplicado e verificado", level: .success)
                 }
             } catch {
                 await MainActor.run {
-                    patchActivity[item.id] = "FALHA AO ATIVAR · TENTE NOVAMENTE"
                     isWorking = false
                     appendLog("Falha ao ativar: \(error.localizedDescription)", level: .warning)
                 }
@@ -660,13 +633,11 @@ private struct CHZPrivHomeView: View {
                 try DevicePatchService.restore(receipt: receipt)
                 await MainActor.run {
                     enabledPatchIDs.remove(item.id)
-                    patchActivity[item.id] = "PRONTO PARA ATIVAÇÃO · ORIGINAL RESTAURADO"
                     isWorking = false
                     appendLog("Arquivo original restaurado", level: .success)
                 }
             } catch {
                 await MainActor.run {
-                    patchActivity[item.id] = "FALHA AO RESTAURAR · BACKUP PRESERVADO"
                     isWorking = false
                     appendLog("Falha ao restaurar: \(error.localizedDescription)", level: .warning)
                 }
@@ -695,13 +666,13 @@ private struct CHZPrivHomeView: View {
                 .frame(width: 34, height: 34)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("LOG DE ATIVIDADE")
-                        .font(.system(size: 17, weight: .black, design: .rounded))
-                        .tracking(0.45)
-                        .foregroundStyle(.white)
-                    Text("Sessão atual · \(enabledPatchIDs.count) ativo(s)")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(AppTheme.secondaryText)
+                    Text("CHZ PRIV // SYSTEM LOG")
+                        .font(.system(size: 15, weight: .black, design: .monospaced))
+                        .tracking(0.55)
+                        .foregroundStyle(Color.green.opacity(0.96))
+                    Text("PROCESSO EM TEMPO REAL · \(enabledPatchIDs.count) PATCH(S) ATIVO(S)")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Color.green.opacity(0.62))
                 }
                 Spacer()
                 Circle()
@@ -721,13 +692,13 @@ private struct CHZPrivHomeView: View {
                                     .frame(width: 16)
                                     .padding(.top, 1)
                                 VStack(alignment: .leading, spacing: 1) {
-                                    Text(entry.message)
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .lineLimit(2)
-                                        .foregroundStyle(entry.level == .warning ? Color.orange : .white.opacity(0.88))
+                                    Text("› \(entry.message)")
+                                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                        .lineLimit(3)
+                                        .foregroundStyle(entry.level == .warning ? Color.orange : Color.green.opacity(0.88))
                                     Text(entry.timestamp)
-                                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                                        .foregroundStyle(AppTheme.tertiaryText)
+                                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                                        .foregroundStyle(Color.green.opacity(0.42))
                                 }
                                 Spacer(minLength: 0)
                             }
@@ -746,11 +717,11 @@ private struct CHZPrivHomeView: View {
             }
         }
         .padding(15)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .background(Color.white.opacity(0.025), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Color.black.opacity(0.92), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .background(Color.green.opacity(0.035), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(Color.white.opacity(0.16), lineWidth: 0.7)
+                .stroke(Color.green.opacity(0.30), lineWidth: 0.7)
         }
         .overlay(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
