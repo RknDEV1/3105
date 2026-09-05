@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.appLanguage) private var language
     @EnvironmentObject private var appState: AppState
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
+    @AppStorage(SoundEffectManager.enabledKey) private var soundEffectsEnabled = true
 
     var body: some View {
         NavigationStack {
@@ -31,6 +32,11 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                }
+
+                Section("CHZ PRIV") {
+                    Toggle("Efeitos sonoros", isOn: $soundEffectsEnabled)
+                        .tint(AppTheme.accent)
                 }
 
                 Section(language.text("common.device")) {
