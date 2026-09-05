@@ -40,6 +40,7 @@ struct CHZPrivWordmark: View {
                 .italic()
                 .foregroundStyle(AppTheme.accent)
                 .shadow(color: AppTheme.accent.opacity(0.90), radius: 1.5)
+                .shadow(color: AppTheme.accent.opacity(0.72), radius: 0, x: 0.55, y: 0)
                 .shadow(color: AppTheme.accent.opacity(0.45), radius: 0.45)
             Text("PRIV")
                 .font(.custom(AppTheme.brandFontName, size: size * 0.94))
@@ -47,6 +48,7 @@ struct CHZPrivWordmark: View {
                 .italic()
                 .foregroundStyle(.white)
                 .shadow(color: .white.opacity(0.72), radius: 1.2)
+                .shadow(color: .white.opacity(0.62), radius: 0, x: 0.55, y: 0)
                 .shadow(color: .white.opacity(0.30), radius: 0.45)
         }
         .accessibilityElement(children: .combine)
