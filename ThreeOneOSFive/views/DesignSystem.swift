@@ -6,6 +6,8 @@ enum AppTheme {
     static let accent = Color(red: 1.00, green: 0.015, blue: 0.055)
     static let accentBright = Color(red: 1.00, green: 0.16, blue: 0.19)
     static let accentSoft = Color(red: 1.00, green: 0.015, blue: 0.055).opacity(0.16)
+    static let outline = accent.opacity(0.58)
+    static let outlineStrong = accentBright.opacity(0.86)
     static let pageBackground = Color.black
     static let consoleBackground = Color(red: 0.045, green: 0.018, blue: 0.022)
     static let cardBackground = Color(red: 0.065, green: 0.020, blue: 0.026)
@@ -155,7 +157,7 @@ struct AppLogo: View {
         .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                .stroke(AppTheme.accentBright.opacity(0.85), lineWidth: 1)
+                .stroke(AppTheme.outlineStrong, lineWidth: 1.35)
         }
         .shadow(color: AppTheme.accent.opacity(0.35), radius: 8)
         .accessibilityHidden(true)

@@ -146,7 +146,7 @@ struct OnboardingView: View {
                      .fill(Color(uiColor: .secondarySystemBackground))
                      .overlay(
                          RoundedRectangle(cornerRadius: 10, style: .continuous)
-                             .stroke(AppTheme.accent.opacity(0.3), lineWidth: 1)
+                             .stroke(AppTheme.outline, lineWidth: 1.0)
                      )
                      .frame(width: 72, height: 72)
                  Image(systemName: "sparkles")
@@ -181,7 +181,7 @@ struct OnboardingView: View {
                      .fill(Color(uiColor: .secondarySystemBackground))
                      .overlay(
                          RoundedRectangle(cornerRadius: 10, style: .continuous)
-                             .stroke(AppTheme.accent.opacity(0.3), lineWidth: 1)
+                             .stroke(AppTheme.outline, lineWidth: 1.0)
                      )
                      .frame(width: 72, height: 72)
                  Image(systemName: "iphone.gen2")
@@ -240,7 +240,7 @@ struct OnboardingView: View {
                      .fill(Color(uiColor: .secondarySystemBackground))
                      .overlay(
                          RoundedRectangle(cornerRadius: 10, style: .continuous)
-                             .stroke(AppTheme.accent.opacity(0.4), lineWidth: 1)
+                             .stroke(AppTheme.outlineStrong, lineWidth: 1.05)
                      )
                      .frame(width: 72, height: 72)
                  Image(systemName: "exclamationmark.shield.fill")

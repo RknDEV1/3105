@@ -106,11 +106,11 @@ struct LicenseInfoView: View {
             .background(AppTheme.cardBackground.opacity(0.72), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(Color.white.opacity(0.13), lineWidth: 0.8)
+                    .stroke(AppTheme.outline, lineWidth: 1.0)
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(AppTheme.accent.opacity(0.28), lineWidth: 0.7)
+                    .stroke(AppTheme.outlineStrong, lineWidth: 1.05)
             }
             .shadow(color: AppTheme.accent.opacity(0.13), radius: 16, y: 8)
         }

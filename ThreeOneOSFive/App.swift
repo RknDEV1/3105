@@ -180,7 +180,7 @@ private struct FreeFireSelectionView: View {
                     .background(AppTheme.success.opacity(0.07), in: Capsule(style: .continuous))
                     .overlay {
                         Capsule(style: .continuous)
-                            .stroke(AppTheme.success.opacity(0.25), lineWidth: 0.7)
+                            .stroke(AppTheme.outline, lineWidth: 1.0)
                     }
 
                     Text("EDIÇÕES DISPONÍVEIS")
@@ -242,7 +242,7 @@ private struct FreeFireSelectionView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(supported ? AppTheme.accentBright.opacity(0.70) : Color.white.opacity(0.18), lineWidth: 1)
+                            .stroke(supported ? AppTheme.outlineStrong : AppTheme.outline, lineWidth: 1.25)
                     }
                     .opacity(supported ? 1 : 0.60)
                     .shadow(color: supported ? AppTheme.accent.opacity(0.35) : .clear, radius: 14, y: 6)
@@ -272,7 +272,7 @@ private struct FreeFireSelectionView: View {
             .background((supported ? AppTheme.accent : Color.white).opacity(supported ? 0.08 : 0.035), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(supported ? AppTheme.accent.opacity(0.46) : Color.white.opacity(0.13), lineWidth: 0.8)
+                    .stroke(supported ? AppTheme.outlineStrong : AppTheme.outline, lineWidth: 1.05)
             }
             .shadow(color: supported ? AppTheme.accent.opacity(0.18) : .clear, radius: 16, y: 8)
         }

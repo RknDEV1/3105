@@ -331,6 +331,7 @@ private struct CHZPrivHomeView: View {
     @State private var freeFirePatches: [PatchLibraryItem] = []
     @State private var enabledPatchIDs = Set<UUID>()
     @State private var isWorking = false
+    @State private var didLoadPatches = false
     @State private var activityLog = [LogEntry(
         timestamp: Date().formatted(date: .omitted, time: .shortened),
         message: "Sistema pronto — aguardando patches",
@@ -377,9 +378,7 @@ private struct CHZPrivHomeView: View {
         }
         .tint(AppTheme.accent)
         .onAppear {
-            guard !isFreeFireMax else { return }
-            PatchProjectLibrary.installBundledOriginalFreeFirePatches()
-            reloadFreeFirePatches()
+            loadPatchesIfNeeded()
         }
     }
 
@@ -393,7 +392,7 @@ private struct CHZPrivHomeView: View {
         .background(AppTheme.cardBackground.opacity(0.84), in: Capsule(style: .continuous))
         .overlay {
             Capsule(style: .continuous)
-                .stroke(Color.white.opacity(0.14), lineWidth: 0.8)
+                .stroke(AppTheme.outline, lineWidth: 1.15)
         }
         .shadow(color: AppTheme.accent.opacity(0.22), radius: 18, y: 8)
         .padding(.horizontal, 44)
@@ -421,7 +420,7 @@ private struct CHZPrivHomeView: View {
                         .fill(AppTheme.accent.opacity(0.16))
                         .overlay {
                             Capsule(style: .continuous)
-                                .stroke(AppTheme.accent.opacity(0.35), lineWidth: 0.7)
+                                .stroke(AppTheme.outlineStrong, lineWidth: 1.05)
                         }
                 }
             }
@@ -448,7 +447,7 @@ private struct CHZPrivHomeView: View {
                     .background(.ultraThinMaterial.opacity(0.55), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.white.opacity(0.14), lineWidth: 0.7)
+                            .stroke(AppTheme.outline, lineWidth: 1.0)
                     }
             } else {
                 categorySection(.avatar)
@@ -488,7 +487,7 @@ private struct CHZPrivHomeView: View {
         let title = item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent
         return HStack(spacing: 12) {
                 Image(systemName: item.category.symbol)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(AppTheme.accentBright)
                 .shadow(color: AppTheme.accent.opacity(0.55), radius: 7)
                 .frame(width: 28)
@@ -496,12 +495,12 @@ private struct CHZPrivHomeView: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(title.uppercased())
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
                     .tracking(0.25)
                     .foregroundStyle(AppTheme.primaryText)
                     .lineLimit(2)
                 Text(patchDescription(for: item))
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundStyle(AppTheme.tertiaryText)
                     .lineLimit(2)
             }
@@ -514,17 +513,18 @@ private struct CHZPrivHomeView: View {
                 .toggleStyle(CHZSwitchStyle())
                 .disabled(item.project == nil || isWorking)
         }
-        .padding(.horizontal, 11)
-        .frame(minHeight: 62)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 5)
+        .frame(minHeight: 78)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
         .background(AppTheme.cardBackground.opacity(0.74), in: RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous)
-                .stroke(Color.white.opacity(0.14), lineWidth: 0.7)
+                .stroke(AppTheme.outline, lineWidth: 1.0)
         }
         .overlay {
             RoundedRectangle(cornerRadius: AppTheme.contentCardCornerRadius, style: .continuous)
-                .stroke(AppTheme.accent.opacity(0.46), lineWidth: 0.65)
+                .stroke(AppTheme.outlineStrong, lineWidth: 1.15)
         }
         .shadow(color: AppTheme.accent.opacity(0.16), radius: 10, y: 5)
         .overlay(alignment: .topLeading) {
@@ -568,14 +568,20 @@ private struct CHZPrivHomeView: View {
         return ""
     }
 
-    private func reloadFreeFirePatches() {
-        // Os pacotes empacotados nesta versão pertencem exclusivamente ao Free Fire.
-        let items = PatchProjectLibrary.load()
-        freeFirePatches = items
-        enabledPatchIDs = Set(items.compactMap { item in
-            guard DevicePatchService.latestReceipt(projectID: item.id) != nil else { return nil }
-            return item.id
-        })
+    private func loadPatchesIfNeeded() {
+        guard !isFreeFireMax, !didLoadPatches else { return }
+        didLoadPatches = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            PatchProjectLibrary.installBundledOriginalFreeFirePatches()
+            let items = PatchProjectLibrary.load()
+            let enabled = Set(items.compactMap { item in
+                DevicePatchService.latestReceipt(projectID: item.id) == nil ? nil : item.id
+            })
+            DispatchQueue.main.async {
+                freeFirePatches = items
+                enabledPatchIDs = enabled
+            }
+        }
     }
 
     private func updatePatchState(item: PatchLibraryItem, isEnabled: Bool) {
@@ -721,7 +727,7 @@ private struct CHZPrivHomeView: View {
         .background(Color.green.opacity(0.035), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(Color.green.opacity(0.30), lineWidth: 0.7)
+                .stroke(AppTheme.outline, lineWidth: 1.05)
         }
         .overlay(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
@@ -774,7 +780,7 @@ private struct CHZSwitchStyle: ToggleStyle {
                     .frame(width: 58, height: 34)
                     .overlay {
                         Capsule(style: .continuous)
-                            .stroke(configuration.isOn ? AppTheme.accentBright : Color.white.opacity(0.28), lineWidth: 0.9)
+                            .stroke(configuration.isOn ? AppTheme.outlineStrong : AppTheme.outline, lineWidth: 1.05)
                     }
 
                 Circle()
